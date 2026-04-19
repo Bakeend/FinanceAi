@@ -1,0 +1,7 @@
+Banco XPTO - Extrato
+Periodo 01/04/2026 a 30/04/2026
+01/04/2026 Supermercado ABC -150,45
+02/04/2026 Salario 3.500,00
+03/04/2026 Uber -22,30
+05/04/2026 Farmacia -47,80
+Saldo final: 3.279,45

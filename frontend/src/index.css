@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+body {
+  background-color: #0a0f1e;
+  background-image:
+    radial-gradient(at 20% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+    radial-gradient(at 80% 0%, rgba(129, 140, 248, 0.07) 0%, transparent 45%),
+    radial-gradient(at 0% 80%, rgba(244, 63, 94, 0.05) 0%, transparent 40%);
+  background-attachment: fixed;
+  color: #e2e8f0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1f2a44; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2d3b5e; }
+
+.glass {
+  background: rgba(20, 28, 47, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.08);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #141c2f 0%, #1a2438 50%, #141c2f 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Light theme — overrides the CSS variables / color tokens */
+html.light body {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 20% 10%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+    radial-gradient(at 80% 0%, rgba(99, 102, 241, 0.06) 0%, transparent 45%),
+    radial-gradient(at 0% 80%, rgba(244, 63, 94, 0.04) 0%, transparent 40%);
+  color: #0f172a;
+}
+
+html.light .bg-bg { background-color: #f8fafc !important; }
+html.light .bg-bg-soft { background-color: #f1f5f9 !important; }
+html.light .bg-card { background-color: #ffffff !important; }
+html.light .bg-card-hover\/30 { background-color: rgba(241, 245, 249, 0.7) !important; }
+html.light .bg-card-hover\/40 { background-color: rgba(241, 245, 249, 0.85) !important; }
+html.light .bg-card-hover\/50 { background-color: rgba(226, 232, 240, 0.9) !important; }
+html.light .bg-card-hover { background-color: #f1f5f9 !important; }
+html.light .border-border { border-color: #e2e8f0 !important; }
+html.light .text-muted { color: #64748b !important; }
+html.light .text-slate-100,
+html.light .text-slate-200 { color: #0f172a !important; }
+html.light .text-slate-300 { color: #334155 !important; }
+html.light .text-slate-400 { color: #475569 !important; }
+html.light .glass {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(14, 165, 233, 0.12);
+}
+html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+html.light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+html.light .skeleton {
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+}
