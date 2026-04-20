@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ArrowDownRight, ArrowUpRight, CheckCircle2, AlertCircle, Sparkles, Wand2, Layers, Camera, Paperclip, ChevronDown, RefreshCw } from 'lucide-react';
+import { Plus, CheckCircle2, AlertCircle, Sparkles, Wand2, Layers, Camera, Paperclip, ChevronDown, RefreshCw } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { api, friendlyError } from '../lib/api';
 import type { Account } from '../lib/types';
 import { CATEGORIAS } from '../lib/categories';
+import { AmountInput } from '../components/AmountInput';
 
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -21,10 +22,10 @@ export function NewTransactionPage() {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [tipo, setTipo] = useState<'gasto' | 'entrada'>('gasto');
+  const [valorSigned, setValorSigned] = useState(0);
+  const tipo = valorSigned > 0 ? 'entrada' : 'gasto';
   const [data, setData] = useState(today);
   const [descricao, setDescricao] = useState('');
-  const [valor, setValor] = useState('');
   const [categoria, setCategoria] = useState('Outros');
   const [nlText, setNlText] = useState('');
   const [nlBusy, setNlBusy] = useState(false);
@@ -63,10 +64,7 @@ export function NewTransactionPage() {
       if (r.data) setData(r.data);
       const desc = r.estabelecimento ? `${r.estabelecimento} — ${r.descricao}`.slice(0, 100) : r.descricao;
       setDescricao(desc);
-      if (r.valor != null) {
-        setValor(String(Math.abs(r.valor)).replace('.', ','));
-        setTipo(r.valor < 0 ? 'gasto' : 'entrada');
-      }
+      if (r.valor != null) setValorSigned(r.valor);
       setCategoria(r.categoria);
     } catch (e) {
       setError(friendlyError(e));
@@ -85,9 +83,8 @@ export function NewTransactionPage() {
       if ('error' in r) { setError(r.error); return; }
       setData(r.data);
       setDescricao(r.descricao);
-      setValor(String(Math.abs(r.valor)));
+      setValorSigned(r.valor);
       setCategoria(r.categoria);
-      setTipo(r.valor < 0 ? 'gasto' : 'entrada');
       if (r.conta) {
         const { account, created } = await api.findOrCreateAccount(r.conta);
         setAccountId(account.id);
@@ -105,29 +102,16 @@ export function NewTransactionPage() {
     setError(null);
     setSuccess(null);
     
-    let raw = valor.replace(/[^\d,.-]/g, '');
-    if (raw.includes(',') && raw.includes('.')) {
-      if (raw.lastIndexOf(',') > raw.lastIndexOf('.')) {
-        raw = raw.replace(/\./g, '').replace(',', '.');
-      } else {
-        raw = raw.replace(/,/g, '');
-      }
-    } else if (raw.includes(',')) {
-      raw = raw.replace(',', '.');
-    }
-    const v = Number(raw);
-
     if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return setError('Data inválida');
     if (!descricao.trim()) return setError('Descrição obrigatória');
-    if (Number.isNaN(v) || v === 0) return setError('Valor inválido. Use vírgula para centavos.');
-    const valorFinal = tipo === 'gasto' ? -Math.abs(v) : Math.abs(v);
+    if (valorSigned === 0) return setError('Valor inválido.');
 
     setBusy(true);
     try {
       const r = await api.createManual({
         data,
         descricao: descricao.trim(),
-        valor: valorFinal,
+        valor: valorSigned,
         categoria,
         ...(accountId ? { accountId } : {}),
         ...(installmentsEnabled && installments >= 2 && installments <= 60 ? { installments } : {}),
@@ -140,7 +124,7 @@ export function NewTransactionPage() {
       const [y, m] = data.split('-').map(Number);
       setSuccess({ mes: m, ano: y });
       setDescricao('');
-      setValor('');
+      setValorSigned(0);
       setTimeout(() => navigate('/', { state: { mes: m, ano: y } }), 1200);
     } catch (e) {
       setError(friendlyError(e));
@@ -287,46 +271,17 @@ export function NewTransactionPage() {
         transition={{ delay: 0.1 }}
         className="rounded-2xl border border-border bg-card p-5 flex flex-col gap-4"
       >
-        {/* Tipo toggle */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => setTipo('gasto')}
-            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-              tipo === 'gasto'
-                ? 'border-rose-500/50 bg-rose-500/15 text-rose-300 shadow-glow-rose'
-                : 'border-border bg-bg-soft text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <ArrowDownRight className="w-4 h-4" />
-            <span className="font-medium">Gasto</span>
-          </button>
-          <button
-            onClick={() => setTipo('entrada')}
-            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-              tipo === 'entrada'
-                ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300 shadow-glow-emerald'
-                : 'border-border bg-bg-soft text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <ArrowUpRight className="w-4 h-4" />
-            <span className="font-medium">Entrada</span>
-          </button>
-        </div>
-
         {/* Valor em destaque */}
         <div>
           <label className="text-xs text-muted uppercase tracking-wider">Valor</label>
           <div className="mt-1 flex items-center gap-2 bg-bg-soft border border-border rounded-xl px-4 py-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
             <span className="text-muted text-lg">R$</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="0,00"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              className={`flex-1 bg-transparent text-2xl font-bold tabular-nums outline-none ${
-                tipo === 'gasto' ? 'text-rose-300' : 'text-emerald-300'
-              }`}
+            <AmountInput
+              value={valorSigned}
+              onChange={setValorSigned}
+              defaultSign="-"
+              wrapperClassName="flex-1"
+              inputClassName={`text-2xl font-bold tabular-nums ${tipo === 'gasto' ? 'text-rose-300' : 'text-emerald-300'}`}
             />
           </div>
         </div>
@@ -362,10 +317,9 @@ export function NewTransactionPage() {
                   <span className="text-xs text-muted">(2 a 60)</span>
                 </div>
                 {(() => {
-                  const raw = valor.replace(/\s/g, '').replace(',', '.');
-                  const v = Number(raw);
-                  if (!Number.isNaN(v) && v > 0) {
-                    const per = v / installments;
+                  const absVal = Math.abs(valorSigned);
+                  if (absVal > 0) {
+                    const per = absVal / installments;
                     return (
                       <div className="text-xs text-accent bg-accent/10 border border-accent/20 rounded-lg px-3 py-2">
                         {installments}x de {per.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
