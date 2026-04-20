@@ -16,13 +16,14 @@ import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 
 @Module({
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'frontend', 'dist'),
     }),
-    DatabaseModule, AuthModule, TransactionsModule, AiModule, DashboardModule, GoalsModule, AccountsModule, RemindersModule, BudgetsModule, RulesModule, TripsModule, BackupModule
+    DatabaseModule, AuthModule, TransactionsModule, AiModule, DashboardModule, GoalsModule, AccountsModule, RemindersModule, BudgetsModule, RulesModule, TripsModule, BackupModule, ExchangeRateModule
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

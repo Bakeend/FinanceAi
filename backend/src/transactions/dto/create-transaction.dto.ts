@@ -11,4 +11,10 @@ export class CreateTransactionDto {
   @IsOptional() @IsString() attachment?: string | null;
   @IsOptional() @IsArray() tags?: string[];
   @IsOptional() @IsBoolean() isRecurring?: boolean;
+  @IsOptional()
+  @IsString()
+  currency?: string;
+  @IsOptional()
+  @IsNumber()
+  originalAmount?: number;
 }

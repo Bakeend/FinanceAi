@@ -12,9 +12,10 @@ import { AiModule } from '../ai/ai.module';
 import { AiService } from '../ai/ai.service';
 import { RulesModule } from '../rules/rules.module';
 import { TripsModule } from '../trips/trips.module';
+import { ExchangeRateModule } from '../exchange-rate/exchange-rate.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction, TransactionEdit, Month]), forwardRef(() => AiModule), RulesModule, TripsModule],
+  imports: [TypeOrmModule.forFeature([Transaction, TransactionEdit, Month]), forwardRef(() => AiModule), RulesModule, TripsModule, ExchangeRateModule],
   controllers: [TransactionsController],
   providers: [
     TransactionsService,

@@ -180,9 +180,7 @@ export class TransactionsController {
       }, u.id);
       return { saved: created[0] ?? null, skipped: 0, installments: created.length };
     }
-    const { saved, skipped } = await this.txs.createMany([
-      { ...dto, categoria: dto.categoria ?? 'Outros' } as any,
-    ], u.id);
+    const { saved, skipped } = await this.txs.createManual(dto, u.id);
     return { saved: saved[0] ?? null, skipped };
   }
 

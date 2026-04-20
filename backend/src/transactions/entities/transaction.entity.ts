@@ -15,6 +15,11 @@ export class Transaction {
   @Column({ type: 'text' }) descricao: string;
   @Column({ type: 'numeric', precision: 12, scale: 2, transformer: { to: (v: number) => v, from: (v: string) => Number(v) } })
   valor: number;
+  @Column({ type: 'varchar', length: 8, default: 'BRL' })
+  currency: string;
+  @Column({ type: 'numeric', precision: 12, scale: 2, nullable: true, name: 'original_amount',
+    transformer: { to: (v: number | null) => v, from: (v: string | null) => (v == null ? null : Number(v)) } })
+  originalAmount: number | null;
   @Column({ type: 'varchar', length: 32, default: 'Outros' }) categoria: string;
   @Column({ type: 'text', nullable: true }) subcategoria: string | null;
   @Column({ type: 'text', nullable: true, transformer: tagsTransformer, default: null })
