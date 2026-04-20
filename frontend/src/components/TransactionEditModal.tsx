@@ -32,7 +32,7 @@ export function TransactionEditModal({
   const [accountId, setAccountId] = useState<string | null>(null);
   const [applyToInstallments, setApplyToInstallments] = useState(false);
   const [mode, setMode] = useState<'edit' | 'split'>('edit');
-  const [splitRows, setSplitRows] = useState<{ valor: string; categoria: string; descricao: string }[]>([]);
+  const [splitRows, setSplitRows] = useState<{ valor: number; categoria: string; descricao: string }[]>([]);
   const [attachment, setAttachment] = useState<string | null>(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [duplicated, setDuplicated] = useState(false);
@@ -59,10 +59,10 @@ export function TransactionEditModal({
       setMode('edit');
       setAttachment(tx.attachment ?? null);
       setIsRecurring(tx.isRecurring ?? false);
-      const half = Math.abs(tx.valor) / 2;
+      const half = tx.valor / 2;
       setSplitRows([
-        { valor: half.toFixed(2), categoria: tx.categoria, descricao: '' },
-        { valor: half.toFixed(2), categoria: tx.categoria, descricao: '' },
+        { valor: half, categoria: tx.categoria, descricao: '' },
+        { valor: half, categoria: tx.categoria, descricao: '' },
       ]);
     }
   }, [tx]);
@@ -161,57 +161,35 @@ export function TransactionEditModal({
     }
   };
 
-  const splitTotal = splitRows.reduce((s, r) => {
-    let raw = (r.valor || '0').replace(/[^\d,.-]/g, '');
-    if (raw.includes(',') && raw.includes('.')) {
-      raw = raw.lastIndexOf(',') > raw.lastIndexOf('.') 
-        ? raw.replace(/\./g, '').replace(',', '.') 
-        : raw.replace(/,/g, '');
-    } else if (raw.includes(',')) {
-      raw = raw.replace(',', '.');
-    }
-    const n = Number(raw);
-    return s + (Number.isNaN(n) ? 0 : n);
-  }, 0);
-  const parentAbs = Math.abs(tx.valor);
+  const splitTotal = splitRows.reduce((s, r) => s + r.valor, 0);
 
   const addSplitRow = () => {
-    setSplitRows([...splitRows, { valor: '0', categoria: tx.categoria, descricao: '' }]);
+    setSplitRows([...splitRows, { valor: 0, categoria: tx.categoria, descricao: '' }]);
   };
   const removeSplitRow = (i: number) => {
     if (splitRows.length <= 2) return;
     setSplitRows(splitRows.filter((_, idx) => idx !== i));
   };
-  const updateSplitRow = (i: number, patch: Partial<{ valor: string; categoria: string; descricao: string }>) => {
+  const updateSplitRow = (i: number, patch: Partial<{ valor: number; categoria: string; descricao: string }>) => {
     setSplitRows(splitRows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   };
 
   const confirmSplit = async () => {
     setError(null);
-    const items = splitRows.map((r) => {
-      let raw = r.valor.replace(/[^\d,.-]/g, '');
-      if (raw.includes(',') && raw.includes('.')) {
-        raw = raw.lastIndexOf(',') > raw.lastIndexOf('.') 
-          ? raw.replace(/\./g, '').replace(',', '.') 
-          : raw.replace(/,/g, '');
-      } else if (raw.includes(',')) {
-        raw = raw.replace(',', '.');
-      }
-      return {
-        valor: Number(raw),
-        categoria: r.categoria,
-        descricao: r.descricao.trim() || undefined,
-      };
-    });
-    if (items.some((it) => Number.isNaN(it.valor) || it.valor <= 0)) {
-      setError('Todos os valores devem ser maiores que zero.');
+    if (splitRows.some((r) => r.valor === 0)) {
+      setError('Nenhuma parcela pode ter valor zero.');
       return;
     }
-    const sum = items.reduce((s, it) => s + it.valor, 0);
-    if (Math.abs(sum - parentAbs) > 0.01) {
-      setError(`A soma (${sum.toFixed(2)}) deve ser igual ao valor original (${parentAbs.toFixed(2)}).`);
+    const sum = splitRows.reduce((s, r) => s + r.valor, 0);
+    if (Math.abs(sum - tx.valor) > 0.01) {
+      setError(`A soma (${sum.toFixed(2)}) deve ser igual ao valor original (${tx.valor.toFixed(2)}).`);
       return;
     }
+    const items = splitRows.map((r) => ({
+      valor: r.valor,
+      categoria: r.categoria,
+      descricao: r.descricao.trim() || undefined,
+    }));
     setBusy(true);
     try {
       await api.splitTransaction(tx.id, items);
@@ -298,21 +276,21 @@ export function TransactionEditModal({
           {mode === 'split' ? (
             <div className="flex flex-col gap-3">
               <div className="text-xs text-muted">
-                Valor original: <span className="font-semibold text-slate-200 tabular-nums">{parentAbs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                Valor original: <span className="font-semibold text-slate-200 tabular-nums">{tx.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
               </div>
               <div className="flex flex-col gap-2">
                 {splitRows.map((r, i) => (
                   <div key={i} className="rounded-xl border border-border bg-card p-3 flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] uppercase tracking-wider text-muted w-10">#{i + 1}</span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={r.valor}
-                        onChange={(e) => updateSplitRow(i, { valor: e.target.value })}
-                        placeholder="0,00"
-                        className="flex-1 min-w-0 bg-bg-soft border border-border rounded-lg px-2 py-1.5 text-sm text-slate-100 tabular-nums focus:border-accent focus:outline-none"
-                      />
+                      <div className="flex-1 min-w-0 bg-bg-soft border border-border rounded-lg px-2 py-1.5 focus-within:border-accent">
+                        <AmountInput
+                          value={r.valor}
+                          onChange={(v) => updateSplitRow(i, { valor: v })}
+                          defaultSign={tx.valor < 0 ? '-' : '+'}
+                          inputClassName="text-sm text-slate-100 tabular-nums w-full"
+                        />
+                      </div>
                       <select
                         value={r.categoria}
                         onChange={(e) => updateSplitRow(i, { categoria: e.target.value })}
@@ -347,7 +325,7 @@ export function TransactionEditModal({
               </button>
 
               <div className={`text-xs rounded-lg p-2.5 border ${
-                Math.abs(splitTotal - parentAbs) < 0.01
+                Math.abs(splitTotal - tx.valor) < 0.01
                   ? 'border-emerald-700/40 bg-emerald-500/10 text-emerald-300'
                   : 'border-amber-700/40 bg-amber-500/10 text-amber-300'
               }`}>
@@ -357,7 +335,7 @@ export function TransactionEditModal({
                 </span>{' '}
                 /{' '}
                 <span className="font-semibold tabular-nums">
-                  {parentAbs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {tx.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               </div>
 
@@ -373,7 +351,7 @@ export function TransactionEditModal({
                 </button>
                 <button
                   onClick={confirmSplit}
-                  disabled={busy || Math.abs(splitTotal - parentAbs) > 0.01}
+                  disabled={busy || Math.abs(splitTotal - tx.valor) > 0.01}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent-gradient text-slate-900 font-semibold disabled:opacity-50 shadow-glow-accent"
                 >
                   <Scissors className="w-4 h-4" />
