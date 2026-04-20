@@ -1,8 +1,6 @@
 # FinanceAi — Guia para agentes de IA
 
 > **Leia este arquivo antes de modificar o código.** Ele resume decisões de arquitetura, convenções e armadilhas já encontradas. Atualize quando introduzir uma nova convenção.
->
-> Para **postura de trabalho** (código limpo, testes, mobile, protocolo de dúvidas), veja `.ai-memory/`.
 
 ## Visão geral
 
