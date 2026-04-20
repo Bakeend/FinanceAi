@@ -110,9 +110,16 @@ export function NewTransactionPage() {
 
     setBusy(true);
     try {
-      const parsedOriginal = currency !== 'BRL' && originalAmount
-        ? Number(originalAmount.replace(',', '.'))
-        : null;
+      let parsedOriginal: number | null = null;
+      if (currency !== 'BRL' && originalAmount.trim()) {
+        const num = Number(originalAmount.replace(/\./g, '').replace(',', '.'));
+        if (isNaN(num) || num === 0) {
+          setError('Informe um valor válido na moeda selecionada.');
+          setBusy(false);
+          return;
+        }
+        parsedOriginal = num;
+      }
       const r = await api.createManual({
         data,
         descricao: descricao.trim(),
