@@ -37,10 +37,14 @@ export function AmountInput({
   );
 
   useEffect(() => {
-    if (value === 0) return;
+    if (value === 0) {
+      setDisplay('');
+      setSign(defaultSign);
+      return;
+    }
     setSign(value < 0 ? '-' : '+');
     setDisplay(Math.abs(value).toFixed(2).replace('.', ','));
-  }, [value]);
+  }, [value, defaultSign]);
 
   const emit = (disp: string, s: '+' | '-') => {
     const abs = parseDisplayToAbs(disp);
