@@ -49,10 +49,10 @@ export const api = {
     const qstr = qs.toString();
     return http<Transaction[]>(`/transactions${qstr ? `?${qstr}` : ''}`);
   },
-  createManual: async (data: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean; currency?: string; originalAmount?: number | null }) => {
+  createManual: async (data: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean; currency?: string; originalAmount?: number | null }): Promise<{ saved: Transaction | null; skipped: number } | { queued: true; saved: null; skipped: 0 }> => {
     if (!navigator.onLine) {
       await enqueue(data as Record<string, unknown>);
-      return { saved: null, skipped: 0, queued: true } as any;
+      return { queued: true, saved: null, skipped: 0 };
     }
     return http<{ saved: Transaction | null; skipped: number }>('/transactions/manual', {
       method: 'POST',
@@ -60,26 +60,40 @@ export const api = {
       body: JSON.stringify(data),
     });
   },
-  flushQueue: async (): Promise<{ synced: number; failed: number }> => {
-    const { getAll, remove } = await import('./offlineQueue');
-    const items = await getAll();
-    let synced = 0;
-    let failed = 0;
-    for (const { key, item } of items) {
+  flushQueue: (() => {
+    let _flushing = false;
+    return async (): Promise<{ synced: number; failed: number }> => {
+      if (_flushing) return { synced: 0, failed: 0 };
+      _flushing = true;
       try {
-        await http<unknown>('/transactions/manual', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item.payload),
-        });
-        await remove(key);
-        synced++;
-      } catch {
-        failed++;
+        const { getAll, remove } = await import('./offlineQueue');
+        const items = await getAll();
+        let synced = 0;
+        let failed = 0;
+        for (const { key, item } of items) {
+          try {
+            await http<unknown>('/transactions/manual', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item.payload),
+            });
+            await remove(key);
+            synced++;
+          } catch (err) {
+            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+              await remove(key);
+            } else {
+              failed++;
+            }
+          }
+        }
+        if (synced > 0) window.dispatchEvent(new CustomEvent('queue-flushed'));
+        return { synced, failed };
+      } finally {
+        _flushing = false;
       }
-    }
-    return { synced, failed };
-  },
+    };
+  })(),
   updateCategoria: (id: string, categoria: string) =>
     http<Transaction>(`/transactions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categoria }) }),
   updateTransaction: (

@@ -30,9 +30,11 @@ export function Sidebar() {
     update();
     window.addEventListener('online', update);
     window.addEventListener('offline', update);
+    window.addEventListener('queue-flushed', update);
     return () => {
       window.removeEventListener('online', update);
       window.removeEventListener('offline', update);
+      window.removeEventListener('queue-flushed', update);
     };
   }, []);
 

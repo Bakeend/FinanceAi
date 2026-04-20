@@ -4,13 +4,18 @@ const DB_NAME = 'financeai-offline';
 const STORE = 'pending-transactions';
 const DB_VERSION = 1;
 
+let _dbPromise: Promise<IDBDatabase> | null = null;
+
 function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE, { autoIncrement: true });
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+  if (!_dbPromise) {
+    _dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE, { autoIncrement: true });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => { _dbPromise = null; reject(req.error); };
+    });
+  }
+  return _dbPromise;
 }
 
 export type PendingTransaction = {

@@ -130,7 +130,7 @@ export function NewTransactionPage() {
         ...(isRecurring ? { isRecurring: true } : {}),
         ...(currency !== 'BRL' ? { currency, originalAmount: parsedOriginal } : {}),
       });
-      if ((r as any).queued) {
+      if ('queued' in r && r.queued) {
         // Transaction was queued offline - treat as success
         setError(null);
         const [y, m] = data.split('-').map(Number);

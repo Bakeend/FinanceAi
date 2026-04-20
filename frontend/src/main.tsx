@@ -35,16 +35,6 @@ import './index.css';
 
 bindInstallPrompt();
 
-window.addEventListener('online', () => {
-  api.flushQueue().then(({ synced }) => {
-    if (synced > 0) console.info(`[offline-sync] ${synced} transações sincronizadas`);
-  });
-});
-
-if (navigator.onLine) {
-  api.flushQueue().catch(() => {});
-}
-
 function AuthGate() {
   const { status, user, logout } = useAuth();
 
@@ -53,6 +43,16 @@ function AuthGate() {
     window.addEventListener('auth-expired', onExpired);
     return () => window.removeEventListener('auth-expired', onExpired);
   }, [logout]);
+
+  useEffect(() => {
+    if (status !== 'auth') return;
+    const flush = () => api.flushQueue().then(({ synced }) => {
+      if (synced > 0) console.info(`[offline-sync] ${synced} transações sincronizadas`);
+    }).catch(() => {});
+    if (navigator.onLine) flush();
+    window.addEventListener('online', flush);
+    return () => window.removeEventListener('online', flush);
+  }, [status]);
 
   if (status === 'loading') {
     return (
