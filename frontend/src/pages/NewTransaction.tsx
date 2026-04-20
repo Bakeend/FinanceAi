@@ -23,6 +23,8 @@ export function NewTransactionPage() {
   const today = new Date().toISOString().slice(0, 10);
 
   const [valorSigned, setValorSigned] = useState(0);
+  const [currency, setCurrency] = useState('BRL');
+  const [originalAmount, setOriginalAmount] = useState('');
   const tipo = valorSigned > 0 ? 'entrada' : 'gasto';
   const [data, setData] = useState(today);
   const [descricao, setDescricao] = useState('');
@@ -108,6 +110,9 @@ export function NewTransactionPage() {
 
     setBusy(true);
     try {
+      const parsedOriginal = currency !== 'BRL' && originalAmount
+        ? Number(originalAmount.replace(',', '.'))
+        : null;
       const r = await api.createManual({
         data,
         descricao: descricao.trim(),
@@ -116,6 +121,7 @@ export function NewTransactionPage() {
         ...(accountId ? { accountId } : {}),
         ...(installmentsEnabled && installments >= 2 && installments <= 60 ? { installments } : {}),
         ...(isRecurring ? { isRecurring: true } : {}),
+        ...(currency !== 'BRL' ? { currency, originalAmount: parsedOriginal } : {}),
       });
       if (!r.saved && r.skipped > 0) {
         setError('Já existe uma transação idêntica (mesma data + descrição + valor).');
@@ -125,6 +131,8 @@ export function NewTransactionPage() {
       setSuccess({ mes: m, ano: y });
       setDescricao('');
       setValorSigned(0);
+      setCurrency('BRL');
+      setOriginalAmount('');
       setTimeout(() => navigate('/', { state: { mes: m, ano: y } }), 1200);
     } catch (e) {
       setError(friendlyError(e));
@@ -285,6 +293,39 @@ export function NewTransactionPage() {
             />
           </div>
         </div>
+
+        {/* Moeda */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted uppercase tracking-wider">Moeda</label>
+          <select
+            value={currency}
+            onChange={(e) => { setCurrency(e.target.value); setOriginalAmount(''); }}
+            className="bg-bg-soft border border-border rounded-xl px-3 py-2 text-sm text-slate-100 cursor-pointer focus:border-accent focus:outline-none"
+          >
+            {['BRL', 'USD', 'EUR', 'GBP', 'ARS'].map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Valor original (se moeda != BRL) */}
+        {currency !== 'BRL' && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted uppercase tracking-wider">Valor em {currency}</label>
+            <div className="flex items-center gap-2 bg-bg-soft border border-border rounded-xl px-4 py-3 focus-within:border-accent">
+              <span className="text-muted text-sm">{currency}</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={originalAmount}
+                onChange={(e) => setOriginalAmount(e.target.value)}
+                className="flex-1 bg-transparent text-slate-100 tabular-nums outline-none text-sm"
+              />
+            </div>
+            <p className="text-xs text-muted">O valor em BRL será calculado automaticamente na conversão.</p>
+          </div>
+        )}
 
         {/* Parcelamento */}
         {tipo === 'gasto' && valorSigned !== 0 && (

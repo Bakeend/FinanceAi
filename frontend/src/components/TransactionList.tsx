@@ -167,6 +167,11 @@ export function TransactionList({ items, onChange }: { items: Transaction[]; onC
                               {t.valor < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
                               {fmtMoney(t.valor)}
                             </span>
+                            {t.currency && t.currency !== 'BRL' && t.originalAmount != null && (
+                              <span className="text-xs text-muted ml-1">
+                                ({t.currency} {Math.abs(t.originalAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                              </span>
+                            )}
                           </td>
                           <td className="pl-4 cursor-pointer" onClick={() => setEditing(t)}>
                             <CategoryChip categoria={t.categoria} />
@@ -206,9 +211,16 @@ export function TransactionList({ items, onChange }: { items: Transaction[]; onC
                           <div className="text-xs text-muted">{fmtDate(t.data)}</div>
                           <div className="text-sm text-slate-200 mt-0.5 truncate">{t.descricao}</div>
                         </div>
-                        <span className={`tabular-nums font-semibold text-sm whitespace-nowrap ${t.valor < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                          {fmtMoney(t.valor)}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span className={`tabular-nums font-semibold text-sm whitespace-nowrap ${t.valor < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {fmtMoney(t.valor)}
+                          </span>
+                          {t.currency && t.currency !== 'BRL' && t.originalAmount != null && (
+                            <span className="text-xs text-muted">
+                              ({t.currency} {Math.abs(t.originalAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="mt-2 flex items-center justify-between flex-wrap gap-1">
                         <CategoryChip categoria={t.categoria} size="sm" />

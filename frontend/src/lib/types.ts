@@ -3,6 +3,8 @@ export type Transaction = {
   data: string;
   descricao: string;
   valor: number;
+  currency?: string;        // 'BRL', 'USD', etc. — undefined means BRL
+  originalAmount?: number | null;  // amount in the original currency
   categoria: string;
   subcategoria?: string | null;
   tags?: string[];

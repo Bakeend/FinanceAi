@@ -48,7 +48,7 @@ export const api = {
     const qstr = qs.toString();
     return http<Transaction[]>(`/transactions${qstr ? `?${qstr}` : ''}`);
   },
-  createManual: (tx: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean }) =>
+  createManual: (tx: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean; currency?: string; originalAmount?: number | null }) =>
     http<{ saved: Transaction | null; skipped: number }>('/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
