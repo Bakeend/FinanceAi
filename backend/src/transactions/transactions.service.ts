@@ -16,9 +16,9 @@ export class TransactionsService {
     @InjectRepository(Transaction) private readonly txRepo: Repository<Transaction>,
     @InjectRepository(Month) private readonly monthRepo: Repository<Month>,
     @InjectRepository(TransactionEdit) private readonly editRepo: Repository<TransactionEdit>,
+    private readonly exchangeRateService: ExchangeRateService,
     @Optional() private readonly rules?: RulesService,
     @Optional() @InjectRepository(Trip) private readonly tripRepo?: Repository<Trip>,
-    @Optional() private readonly exchangeRateService?: ExchangeRateService,
   ) {}
 
   async createManual(dto: CreateTransactionDto, userId: string) {
@@ -26,23 +26,15 @@ export class TransactionsService {
     let valor = dto.valor;
     let originalAmount: number | null = null;
 
-    if (currency !== 'BRL' && dto.originalAmount != null && this.exchangeRateService) {
+    if (currency !== 'BRL' && dto.originalAmount != null) {
       originalAmount = dto.originalAmount;
       const absConverted = await this.exchangeRateService.convertToBrl(Math.abs(dto.originalAmount), currency);
       valor = dto.valor < 0 ? -absConverted : absConverted;
     }
 
-    const { saved, skipped } = await this.createMany([
-      { ...dto, valor, categoria: dto.categoria ?? 'Outros' } as any,
+    return this.createMany([
+      { ...dto, valor, categoria: dto.categoria ?? 'Outros', currency, originalAmount } as any,
     ], userId);
-
-    if (saved.length && (currency !== 'BRL' || originalAmount != null)) {
-      await this.txRepo.update(saved[0].id, { currency, originalAmount });
-      saved[0].currency = currency;
-      saved[0].originalAmount = originalAmount;
-    }
-
-    return { saved, skipped };
   }
 
   private async logEdit(transactionId: string, userId: string, before: any, patch: Record<string, any>) {

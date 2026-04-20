@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength, Matches } from 'class-validator';
 import { CATEGORIAS } from '../categoria.enum';
 
 export class CreateTransactionDto {
@@ -13,6 +13,8 @@ export class CreateTransactionDto {
   @IsOptional() @IsBoolean() isRecurring?: boolean;
   @IsOptional()
   @IsString()
+  @Matches(/^[A-Z]{3}$/)
+  @IsIn(['BRL', 'USD', 'EUR', 'GBP', 'ARS'])
   currency?: string;
   @IsOptional()
   @IsNumber()
