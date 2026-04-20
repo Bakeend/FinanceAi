@@ -54,7 +54,7 @@ export const api = {
       await enqueue(data as Record<string, unknown>);
       return { queued: true, saved: null, skipped: 0 };
     }
-    return http<{ saved: Transaction | null; skipped: number }>('/transactions/manual', {
+    return http<{ saved: Transaction | null; skipped: number }>('/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -72,7 +72,7 @@ export const api = {
         let failed = 0;
         for (const { key, item } of items) {
           try {
-            await http<unknown>('/transactions/manual', {
+            await http<unknown>('/transactions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(item.payload),
