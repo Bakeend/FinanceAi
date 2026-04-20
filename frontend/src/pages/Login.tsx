@@ -16,12 +16,24 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSignup, setShowSignup] = useState(false);
+  const [ignoreSetup, setIgnoreSetup] = useState(false);
 
   useEffect(() => {
     setError(null);
   }, [mode]);
 
-  if (needsSetup || showSignup) return <SignupPanel onSignedUp={setSession} onBack={needsSetup ? undefined : () => setShowSignup(false)} />;
+  if ((needsSetup && !ignoreSetup) || showSignup) {
+    return (
+      <SignupPanel 
+        onSignedUp={setSession} 
+        onBack={() => {
+          setShowSignup(false);
+          setIgnoreSetup(true);
+        }}
+        isFirstUse={needsSetup && !ignoreSetup}
+      />
+    );
+  }
 
   const submitPassword = async () => {
     if (busy) return;
@@ -214,7 +226,7 @@ function PadKey({ onClick, children }: { onClick: () => void; children: React.Re
   );
 }
 
-function SignupPanel({ onSignedUp, onBack }: { onSignedUp: (t: string, u: any) => void; onBack?: () => void }) {
+function SignupPanel({ onSignedUp, onBack, isFirstUse }: { onSignedUp: (t: string, u: any) => void; onBack?: () => void; isFirstUse?: boolean }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -266,14 +278,8 @@ function SignupPanel({ onSignedUp, onBack }: { onSignedUp: (t: string, u: any) =
             <Wallet className="w-7 h-7 text-slate-900" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao <span className="gradient-text">FinanceAi</span></h1>
-          <p className="text-xs text-muted mt-1">{onBack ? 'Crie uma nova conta local' : 'Primeiro uso — crie sua conta local'}</p>
+          <p className="text-xs text-muted mt-1">{!isFirstUse ? 'Crie uma nova conta local' : 'Primeiro uso — crie sua conta local'}</p>
         </div>
-
-        {onBack && (
-          <button onClick={onBack} className="text-xs text-muted hover:text-slate-200 transition-colors mb-4 flex items-center gap-1">
-            ← Voltar ao login
-          </button>
-        )}
 
         <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
           {step === 1 && (
@@ -344,6 +350,14 @@ function SignupPanel({ onSignedUp, onBack }: { onSignedUp: (t: string, u: any) =
             </div>
           )}
         </div>
+
+        {onBack && (
+          <div className="text-center mt-4">
+            <button onClick={onBack} className="text-xs text-muted hover:text-accent transition-colors">
+              Já tem uma conta? Fazer login
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );
