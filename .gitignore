@@ -9,3 +9,5 @@ backend/uploads/
 backend/dist/
 frontend/dist/
 .claude/
+.claude/settings.local.json
+.worktrees/
