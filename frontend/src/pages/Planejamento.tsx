@@ -19,6 +19,9 @@ export function PlanejamentoPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const active = searchParams.get('tab') ?? 'goals';
   const setTab = (id: string) => setSearchParams({ tab: id }, { replace: true });
+  const now = new Date();
+  const currentMes = now.getMonth() + 1;
+  const currentAno = now.getFullYear();
 
   return (
     <div className="flex flex-col gap-5">
@@ -57,7 +60,7 @@ export function PlanejamentoPage() {
 
       <motion.div key={active} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         {active === 'goals' && <GoalsPage />}
-        {active === 'forecast' && <ForecastPage mes={new Date().getMonth() + 1} ano={new Date().getFullYear()} />}
+        {active === 'forecast' && <ForecastPage mes={currentMes} ano={currentAno} />}
         {active === 'budgets' && <BudgetsPage />}
         {active === 'reminders' && <RemindersPage />}
         {active === 'rules' && <RulesPage />}
