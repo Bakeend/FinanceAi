@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, TrendingUp, Lightbulb, AlertCircle, Loader2 } from 'lucide-react';
+import { Sparkles, TrendingUp, Lightbulb, AlertCircle, Loader2, RefreshCw, CreditCard } from 'lucide-react';
 import { api, friendlyError } from '../lib/api';
 import { MonthSelector } from '../components/MonthSelector';
 import { YearlyProjectionCard } from '../components/YearlyProjectionCard';
@@ -34,9 +34,9 @@ export function InsightsPage() {
       >
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text">Insights</span> de IA
+            <span className="gradient-text">Insights</span> da Luna
           </h2>
-          <p className="text-muted text-sm mt-1">Análise de gastos e previsão alimentadas por LLM</p>
+          <p className="text-muted text-sm mt-1">Análise de gastos e previsão feitas pela Luna</p>
         </div>
         <MonthSelector value={ref} onChange={setRef} />
       </motion.div>
@@ -133,6 +133,92 @@ export function InsightsPage() {
       </AnimatePresence>
 
       <YearlyProjectionCard mes={ref.mes} ano={ref.ano} />
+      <SubscriptionsCard />
     </div>
+  );
+}
+
+type SubItem = { descricao: string; categoria: string; mediaMensal: number; totalAnualEstimado: number; mesesDetectados: number; lastSeen?: string; inactive?: boolean };
+type SubData = { assinaturas: SubItem[]; totalMensal: number; ativas?: SubItem[]; inativas?: SubItem[]; economiaPotencialAnual?: number };
+
+function SubscriptionsCard() {
+  const [data, setData] = useState<SubData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try { setData(await api.subscriptions() as SubData); } catch { setData(null); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const ativas = data?.ativas ?? data?.assinaturas?.filter((a) => !a.inactive) ?? [];
+  const inativas = data?.inativas ?? [];
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="px-5 py-4 border-b border-border bg-amber-500/5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-amber-400" />
+          <h3 className="text-sm font-semibold text-slate-200">Assinaturas detectadas</h3>
+        </div>
+        <button onClick={load} disabled={loading} className="text-muted hover:text-slate-200 transition-colors">
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+      {loading ? (
+        <div className="p-5 flex justify-center"><Loader2 className="w-5 h-5 text-muted animate-spin" /></div>
+      ) : !data || (ativas.length === 0 && inativas.length === 0) ? (
+        <div className="p-5 text-sm text-muted">Nenhuma cobrança recorrente detectada nos últimos 6 meses.</div>
+      ) : (
+        <div>
+          {inativas.length > 0 && (
+            <div className="px-5 py-3 border-b border-rose-500/20 bg-rose-500/5">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-2">
+                {inativas.length} possível{inativas.length === 1 ? '' : 'is'} esquecida{inativas.length === 1 ? '' : 's'}
+                {data.economiaPotencialAnual && data.economiaPotencialAnual > 0 && (
+                  <span className="text-muted normal-case font-normal ml-1">— pode economizar até R${fmt(data.economiaPotencialAnual)}/ano cancelando</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {inativas.map((a) => (
+                  <div key={'i-' + a.descricao} className="flex items-center justify-between gap-3 p-2 rounded-lg bg-bg-soft border border-rose-500/20">
+                    <div className="min-w-0">
+                      <div className="text-sm text-slate-200 font-medium truncate">{a.descricao}</div>
+                      <div className="text-xs text-muted">
+                        {a.categoria} · último em {a.lastSeen ? a.lastSeen.split('-').reverse().join('/') : '—'}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-semibold text-rose-400 tabular-nums">{fmt(a.mediaMensal)}/mês</div>
+                      <div className="text-[10px] text-muted">cancelar?</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="divide-y divide-border/60">
+            {ativas.map((a) => (
+              <div key={a.descricao} className="px-5 py-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm text-slate-200 font-medium truncate">{a.descricao}</div>
+                  <div className="text-xs text-muted">{a.categoria} · {a.mesesDetectados} meses detectados</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-semibold text-amber-400 tabular-nums">{fmt(a.mediaMensal)}/mês</div>
+                  <div className="text-xs text-muted tabular-nums">{fmt(a.totalAnualEstimado)}/ano</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="px-5 py-3 border-t border-border bg-card flex justify-between items-center">
+            <span className="text-xs text-muted">Total mensal das ativas</span>
+            <span className="text-sm font-bold text-amber-400 tabular-nums">{fmt(data.totalMensal)}</span>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 }

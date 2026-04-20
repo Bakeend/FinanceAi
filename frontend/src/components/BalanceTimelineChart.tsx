@@ -73,8 +73,8 @@ export function BalanceTimelineChart() {
           <AreaChart data={chartData} margin={{ left: 0, right: 12, top: 4, bottom: 4 }}>
             <defs>
               <linearGradient id="balance-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.55} />
-                <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2a44" />
@@ -90,11 +90,11 @@ export function BalanceTimelineChart() {
               tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
               width={48}
             />
-            <Tooltip content={<Tip />} cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '3 3' }} />
+            <Tooltip content={<Tip />} cursor={{ stroke: '#8B5CF6', strokeWidth: 1, strokeDasharray: '3 3' }} />
             <Area
               type="monotone"
               dataKey="saldo"
-              stroke="#38bdf8"
+              stroke="#8B5CF6"
               strokeWidth={2}
               fill="url(#balance-grad)"
               animationDuration={600}

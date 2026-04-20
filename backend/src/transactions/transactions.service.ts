@@ -2,6 +2,7 @@ import { Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from './entities/transaction.entity';
+import { TransactionEdit } from './entities/transaction-edit.entity';
 import { Month } from './entities/month.entity';
 import { RawTransaction } from './parsers/types';
 import { RulesService } from '../rules/rules.module';
@@ -12,9 +13,44 @@ export class TransactionsService {
   constructor(
     @InjectRepository(Transaction) private readonly txRepo: Repository<Transaction>,
     @InjectRepository(Month) private readonly monthRepo: Repository<Month>,
+    @InjectRepository(TransactionEdit) private readonly editRepo: Repository<TransactionEdit>,
     @Optional() private readonly rules?: RulesService,
     @Optional() @InjectRepository(Trip) private readonly tripRepo?: Repository<Trip>,
   ) {}
+
+  private async logEdit(transactionId: string, userId: string, before: any, patch: Record<string, any>) {
+    const edits: Partial<TransactionEdit>[] = [];
+    for (const [field, after] of Object.entries(patch)) {
+      if (field === 'tags') {
+        const beforeTags = JSON.stringify(before?.tags ?? []);
+        const afterTags = JSON.stringify(after ?? []);
+        if (beforeTags === afterTags) continue;
+        edits.push({ transactionId, userId, field, beforeValue: beforeTags, afterValue: afterTags });
+        continue;
+      }
+      const beforeVal = before?.[field];
+      if (beforeVal === after) continue;
+      if (beforeVal == null && after == null) continue;
+      edits.push({
+        transactionId,
+        userId,
+        field,
+        beforeValue: beforeVal == null ? null : String(beforeVal),
+        afterValue: after == null ? null : String(after),
+      });
+    }
+    if (edits.length) {
+      await this.editRepo.save(edits.map((e) => this.editRepo.create(e)));
+    }
+  }
+
+  async listEdits(transactionId: string, userId: string) {
+    return this.editRepo.find({
+      where: { transactionId, userId },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+  }
 
   async createMany(
     rows: (RawTransaction & { categoria?: string; attachment?: string | null; accountId?: string | null })[],
@@ -222,13 +258,14 @@ export class TransactionsService {
 
   async updateOne(
     id: string,
-    patch: Partial<Pick<Transaction, 'data' | 'descricao' | 'valor' | 'categoria' | 'subcategoria' | 'accountId' | 'attachment'>> & { tags?: string[] },
+    patch: Partial<Pick<Transaction, 'data' | 'descricao' | 'valor' | 'categoria' | 'subcategoria' | 'accountId' | 'attachment' | 'isRecurring'>> & { tags?: string[] },
     userId: string,
     options: { applyToInstallments?: boolean } = {},
   ) {
     const before = await this.txRepo.findOne({ where: { id, userId } });
     if (!before) return null;
     await this.txRepo.update(id, patch as any);
+    await this.logEdit(id, userId, before, patch as Record<string, any>).catch(() => {});
     const monthsToRecompute = new Set<string>();
     monthsToRecompute.add(before.data.slice(0, 7));
 
@@ -388,5 +425,37 @@ export class TransactionsService {
       { mes, ano, userId, totalGasto: Number(row?.gasto ?? 0), totalEntrada: Number(row?.entrada ?? 0) },
       ['mes', 'ano', 'userId'],
     );
+  }
+
+  // Called on app startup — creates this month's recurring transactions if missing
+  async processRecurring(userId: string): Promise<number> {
+    const now = new Date();
+    const mes = now.getMonth() + 1;
+    const ano = now.getFullYear();
+    const monthStr = `${ano}-${String(mes).padStart(2, '0')}`;
+
+    const templates = await this.txRepo.find({ where: { userId, isRecurring: true } });
+    let created = 0;
+    for (const t of templates) {
+      // Check if already created this month (same descricao + same valor within this month)
+      const start = `${monthStr}-01`;
+      const end = `${monthStr}-31`;
+      const existing = await this.txRepo.findOne({
+        where: { userId, descricao: t.descricao, valor: t.valor } as any,
+      });
+      // More precise: check if already exists this month
+      const count = await this.txRepo.createQueryBuilder('tx')
+        .where('tx.user_id = :uid AND tx.descricao = :desc AND tx.valor = :val AND tx.data >= :start AND tx.data <= :end', {
+          uid: userId, desc: t.descricao, val: t.valor, start, end,
+        })
+        .getCount();
+      if (count > 0) continue;
+
+      const day = Math.min(Number(t.data.split('-')[2]), new Date(ano, mes, 0).getDate());
+      const newDate = `${monthStr}-${String(day).padStart(2, '0')}`;
+      await this.createMany([{ data: newDate, descricao: t.descricao, valor: t.valor, categoria: t.categoria }], userId);
+      created++;
+    }
+    return created;
   }
 }

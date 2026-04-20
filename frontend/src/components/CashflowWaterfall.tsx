@@ -41,12 +41,12 @@ function StepDot(props: any) {
   const r: Step = payload;
   const color =
     r.kind === 'opening' || r.kind === 'closing'
-      ? '#38bdf8'
+      ? '#8B5CF6'
       : r.kind === 'entrada'
-      ? '#10b981'
-      : '#f43f5e';
+      ? '#84CC16'
+      : '#EC4899';
   const bigger = r.kind === 'opening' || r.kind === 'closing';
-  return <Dot cx={cx} cy={cy} r={bigger ? 6 : 4.5} fill={color} stroke="#0a0f1e" strokeWidth={2} />;
+  return <Dot cx={cx} cy={cy} r={bigger ? 6 : 4.5} fill={color} stroke="#0B0B0F" strokeWidth={2} />;
 }
 
 export function CashflowWaterfall({ mes, ano }: { mes: number; ano: number }) {
@@ -110,8 +110,8 @@ export function CashflowWaterfall({ mes, ano }: { mes: number; ano: number }) {
           <ComposedChart data={steps} margin={{ left: 0, right: 20, top: 16, bottom: 32 }}>
             <defs>
               <linearGradient id="cashflow-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2a44" vertical={false} />
@@ -125,16 +125,16 @@ export function CashflowWaterfall({ mes, ano }: { mes: number; ano: number }) {
               height={60}
             />
             <YAxis stroke="#64748b" tick={{ fontSize: 11 }} tickFormatter={(v) => fmtShort(v)} width={52} />
-            <Tooltip content={<Tip />} cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '3 3' }} />
+            <Tooltip content={<Tip />} cursor={{ stroke: '#8B5CF6', strokeWidth: 1, strokeDasharray: '3 3' }} />
             <Area
               type="stepAfter"
               dataKey="saldo"
-              stroke="#38bdf8"
+              stroke="#8B5CF6"
               strokeWidth={2}
               fill="url(#cashflow-grad)"
               animationDuration={600}
               dot={<StepDot />}
-              activeDot={{ r: 7, stroke: '#0a0f1e', strokeWidth: 2, fill: '#38bdf8' }}
+              activeDot={{ r: 7, stroke: '#0B0B0F', strokeWidth: 2, fill: '#8B5CF6' }}
             />
           </ComposedChart>
         </ResponsiveContainer>

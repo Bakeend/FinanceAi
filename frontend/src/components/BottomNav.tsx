@@ -9,7 +9,7 @@ const left = [
   { to: '/transactions', label: 'Transações', icon: ListOrdered },
 ];
 const right = [
-  { to: '/chat', label: 'Chat', icon: MessageCircle },
+  { to: '/chat', label: 'Luna', icon: MessageCircle },
 ];
 
 export function BottomNav() {
@@ -23,7 +23,7 @@ export function BottomNav() {
           ))}
 
           {/* Central floating + button */}
-          <NavLink to="/new" className="flex flex-col items-center -mt-6">
+          <NavLink to="/adicionar" className="flex flex-col items-center -mt-6">
             {({ isActive }) => (
               <>
                 <motion.div

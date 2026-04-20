@@ -3,7 +3,10 @@ import { ArrowDownRight, ArrowUpRight, Wallet } from 'lucide-react';
 import type { Summary, Transaction } from '../lib/types';
 import { Sparkline } from './Sparkline';
 
-const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmt = (n: number) => {
+  const abs = Math.abs(n);
+  return abs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
 
 function buildDailySeries(items: Transaction[], mes: number, ano: number, kind: 'entrada' | 'gasto' | 'saldo'): number[] {
   const days = new Date(ano, mes, 0).getDate();
@@ -34,62 +37,58 @@ export function SummaryCards({ data, items, mes, ano }: { data: Summary; items?:
     {
       label: 'Entradas',
       value: data.totalEntrada,
+      prefix: '+',
       Icon: ArrowUpRight,
-      gradient: 'from-emerald-500/20 to-emerald-500/5',
-      iconBg: 'bg-emerald-500/20 text-emerald-400',
-      valueColor: 'text-emerald-400',
-      glow: 'shadow-glow-emerald',
-      sparkColor: '#10b981',
+      bg: 'bg-[#84CC16]',
+      sparkStroke: 'rgba(63, 98, 18, 0.55)',
       series: canSpark ? buildDailySeries(items!, mes!, ano!, 'entrada') : [],
     },
     {
       label: 'Gastos',
       value: data.totalGasto,
+      prefix: '-',
       Icon: ArrowDownRight,
-      gradient: 'from-rose-500/20 to-rose-500/5',
-      iconBg: 'bg-rose-500/20 text-rose-400',
-      valueColor: 'text-rose-400',
-      glow: 'shadow-glow-rose',
-      sparkColor: '#f43f5e',
+      bg: 'bg-[#F87171]',
+      sparkStroke: 'rgba(127, 29, 29, 0.55)',
       series: canSpark ? buildDailySeries(items!, mes!, ano!, 'gasto') : [],
     },
     {
       label: 'Saldo',
       value: data.saldo,
+      prefix: saldoPositive ? '' : '-',
       Icon: Wallet,
-      gradient: saldoPositive ? 'from-accent/20 to-accent/5' : 'from-rose-500/20 to-rose-500/5',
-      iconBg: saldoPositive ? 'bg-accent/20 text-accent' : 'bg-rose-500/20 text-rose-400',
-      valueColor: saldoPositive ? 'text-accent' : 'text-rose-400',
-      glow: saldoPositive ? 'shadow-glow-accent' : 'shadow-glow-rose',
-      sparkColor: saldoPositive ? '#38bdf8' : '#f43f5e',
+      bg: saldoPositive ? 'bg-[#8B5CF6]' : 'bg-[#F87171]',
+      sparkStroke: saldoPositive ? 'rgba(49, 27, 92, 0.55)' : 'rgba(127, 29, 29, 0.55)',
       series: canSpark ? buildDailySeries(items!, mes!, ano!, 'saldo') : [],
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div data-tour="summary" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {cards.map((c, i) => (
         <motion.div
           key={c.label}
-          initial={{ opacity: 0, y: 16, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: i * 0.08, duration: 0.4, ease: 'easeOut' }}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-          className={`group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br ${c.gradient} p-5 transition-shadow duration-300`}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.06, duration: 0.25, ease: 'easeOut' }}
+          whileHover={{ y: -2, transition: { duration: 0.12 } }}
+          className={`group relative overflow-hidden rounded-2xl ${c.bg} p-4 shadow-card`}
         >
-          <div className="absolute inset-0 bg-card opacity-80 -z-10" />
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              <div className="text-muted text-xs uppercase tracking-wider font-medium">{c.label}</div>
-              <div className={`text-3xl font-bold mt-2 ${c.valueColor} tabular-nums`}>{fmt(c.value)}</div>
+          <div className="relative z-10 flex items-start justify-between gap-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-900/80">
+              {c.label}
             </div>
-            <div className={`w-10 h-10 rounded-xl ${c.iconBg} flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-6`}>
-              <c.Icon className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-zinc-900/15 flex items-center justify-center text-zinc-900">
+              <c.Icon className="w-4 h-4" strokeWidth={2.5} />
             </div>
           </div>
+          <div className="relative z-10 mt-3 text-2xl md:text-[28px] font-extrabold text-zinc-900 tabular-nums leading-tight">
+            {c.prefix && <span className="opacity-70 mr-0.5">{c.prefix}</span>}
+            {fmt(c.value)}
+          </div>
           {canSpark && c.series.length > 1 && (
-            <div className="mt-3 opacity-80">
-              <Sparkline values={c.series} color={c.sparkColor} height={28} width={220} />
+            <div className="absolute bottom-0 left-0 right-0 pointer-events-none opacity-90">
+              <Sparkline values={c.series} color={c.sparkStroke} height={40} width={400} />
             </div>
           )}
         </motion.div>

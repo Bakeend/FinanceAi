@@ -1,4 +1,4 @@
-import { IsArray, IsIn, IsInt, IsISO8601, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { CATEGORIAS } from '../categoria.enum';
 
 export class CreateTransactionDto {
@@ -10,4 +10,5 @@ export class CreateTransactionDto {
   @IsOptional() @IsInt() @Min(2) @Max(60) installments?: number;
   @IsOptional() @IsString() attachment?: string | null;
   @IsOptional() @IsArray() tags?: string[];
+  @IsOptional() @IsBoolean() isRecurring?: boolean;
 }

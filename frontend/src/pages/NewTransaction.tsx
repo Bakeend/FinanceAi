@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ArrowDownRight, ArrowUpRight, CheckCircle2, AlertCircle, Sparkles, Wand2, Layers, Camera, Paperclip, ChevronDown } from 'lucide-react';
+import { Plus, ArrowDownRight, ArrowUpRight, CheckCircle2, AlertCircle, Sparkles, Wand2, Layers, Camera, Paperclip, ChevronDown, RefreshCw } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { api, friendlyError } from '../lib/api';
 import type { Account } from '../lib/types';
@@ -35,8 +35,10 @@ export function NewTransactionPage() {
   const [accountId, setAccountId] = useState<string | null>(null);
   const [installmentsEnabled, setInstallmentsEnabled] = useState(false);
   const [installments, setInstallments] = useState(2);
+  const [isRecurring, setIsRecurring] = useState(false);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
+  const [accountInfo, setAccountInfo] = useState<string | null>(null);
   const [nlOpen, setNlOpen] = useState(false);
 
   useEffect(() => {
@@ -86,6 +88,11 @@ export function NewTransactionPage() {
       setValor(String(Math.abs(r.valor)));
       setCategoria(r.categoria);
       setTipo(r.valor < 0 ? 'gasto' : 'entrada');
+      if (r.conta) {
+        const { account, created } = await api.findOrCreateAccount(r.conta);
+        setAccountId(account.id);
+        if (created) { setAccountInfo(`Conta "${account.nome}" criada automaticamente`); setTimeout(() => setAccountInfo(null), 4000); }
+      }
       setNlText('');
     } catch (e) {
       setError(friendlyError(e));
@@ -113,6 +120,7 @@ export function NewTransactionPage() {
         categoria,
         ...(accountId ? { accountId } : {}),
         ...(installmentsEnabled && installments >= 2 && installments <= 60 ? { installments } : {}),
+        ...(isRecurring ? { isRecurring: true } : {}),
       });
       if (!r.saved && r.skipped > 0) {
         setError('Já existe uma transação idêntica (mesma data + descrição + valor).');
@@ -139,83 +147,28 @@ export function NewTransactionPage() {
         <p className="text-muted text-sm mt-1">Entrada ou gasto manual — sem passar por upload</p>
       </motion.div>
 
-      {/* Quick actions: colapsáveis para evitar poluição visual */}
+      {/* Quick actions: único card "Preencher com Luna" */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.03 }}
-        className="flex flex-col gap-2"
-      >
-        {/* Foto de recibo */}
-        <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setOcrOpen((o) => !o)}
-            className="w-full flex items-center gap-2 p-3 text-left hover:bg-emerald-500/5 transition-colors"
-            aria-expanded={ocrOpen}
-          >
-            <Camera className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm text-slate-200 font-semibold">Foto de recibo</span>
-            <span className="text-[10px] text-muted hidden sm:inline">IA extrai data, valor e categoria</span>
-            <ChevronDown className={`w-4 h-4 text-emerald-400 ml-auto transition-transform ${ocrOpen ? 'rotate-180' : ''}`} />
-          </button>
-          <AnimatePresence initial={false}>
-            {ocrOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="p-3 pt-0 grid grid-cols-2 gap-2">
-                  <label className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-colors ${ocrBusy ? 'border-emerald-500/50 bg-emerald-500/10 pointer-events-none' : 'border-emerald-500/30 bg-bg-soft hover:border-emerald-400/60 hover:bg-emerald-500/5'}`}>
-                    {ocrBusy ? (
-                      <div className="w-4 h-4 rounded-full border-2 border-emerald-400/30 border-t-emerald-400 animate-spin" />
-                    ) : (
-                      <Camera className="w-4 h-4 text-emerald-300" />
-                    )}
-                    <span className="text-sm text-emerald-300 font-medium">{ocrBusy ? 'Lendo…' : 'Tirar foto'}</span>
-                    <input
-                      type="file" accept="image/*" capture="environment" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) onReceiptFile(f); e.target.value = ''; }}
-                    />
-                  </label>
-                  <label className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border cursor-pointer transition-colors ${ocrBusy ? 'border-emerald-500/50 bg-emerald-500/10 pointer-events-none' : 'border-emerald-500/30 bg-bg-soft hover:border-emerald-400/60 hover:bg-emerald-500/5'}`}>
-                    <Paperclip className="w-4 h-4 text-emerald-300" />
-                    <span className="text-sm text-emerald-300 font-medium">Anexar arquivo</span>
-                    <input
-                      type="file" accept="image/*" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) onReceiptFile(f); e.target.value = ''; }}
-                    />
-                  </label>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-
-      {/* Natural language input */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
         className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-transparent overflow-hidden"
       >
+        {/* Header toggle */}
         <button
           type="button"
-          onClick={() => setNlOpen((o) => !o)}
+          onClick={() => { setNlOpen((o) => !o); setOcrOpen(false); }}
           className="w-full flex items-center gap-2 p-3 text-left hover:bg-violet-500/5 transition-colors"
-          aria-expanded={nlOpen}
+          aria-expanded={nlOpen || ocrOpen}
         >
-          <Wand2 className="w-4 h-4 text-violet-400" />
-          <span className="text-sm text-slate-200 font-semibold">Descrever em texto</span>
-          <span className="text-[10px] text-muted hidden sm:inline">IA preenche o formulário</span>
-          <ChevronDown className={`w-4 h-4 text-violet-400 ml-auto transition-transform ${nlOpen ? 'rotate-180' : ''}`} />
+          <Sparkles className="w-4 h-4 text-violet-400" />
+          <span className="text-sm text-slate-200 font-semibold">Preencher com a Luna</span>
+          <span className="text-[10px] text-muted hidden sm:inline">Texto ou foto — a Luna preenche o formulário</span>
+          <ChevronDown className={`w-4 h-4 text-violet-400 ml-auto transition-transform ${(nlOpen || ocrOpen) ? 'rotate-180' : ''}`} />
         </button>
+
         <AnimatePresence initial={false}>
-          {nlOpen && (
+          {(nlOpen || ocrOpen) && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -223,22 +176,94 @@ export function NewTransactionPage() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="p-3 pt-0 flex gap-2">
-                <input
-                  value={nlText}
-                  onChange={(e) => setNlText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && parseNL()}
-                  placeholder='ex: "gastei 50 no almoço hoje"'
-                  className="flex-1 bg-bg-soft border border-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-muted focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                />
-                <button
-                  onClick={parseNL}
-                  disabled={nlBusy || !nlText.trim()}
-                  className="flex items-center gap-1.5 bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-xl disabled:opacity-50 shadow-[0_0_30px_-10px_rgba(167,139,250,0.6)]"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {nlBusy ? 'Lendo…' : 'Preencher'}
-                </button>
+              <div className="px-3 pb-3 flex flex-col gap-3">
+                {/* Mode selector */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setNlOpen(true); setOcrOpen(false); }}
+                    className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-all ${
+                      nlOpen
+                        ? 'border-violet-400/60 bg-violet-500/20 text-violet-200'
+                        : 'border-border bg-bg-soft text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    Descrever em texto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setOcrOpen(true); setNlOpen(false); }}
+                    className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-all ${
+                      ocrOpen
+                        ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200'
+                        : 'border-border bg-bg-soft text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Foto de recibo
+                  </button>
+                </div>
+
+                {/* NL text mode */}
+                <AnimatePresence mode="wait">
+                  {nlOpen && (
+                    <motion.div
+                      key="nl"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex gap-2"
+                    >
+                      <input
+                        autoFocus
+                        value={nlText}
+                        onChange={(e) => setNlText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && parseNL()}
+                        placeholder='ex: "gastei 50 no almoço hoje"'
+                        className="flex-1 bg-bg-soft border border-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-muted focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                      />
+                      <button
+                        onClick={parseNL}
+                        disabled={nlBusy || !nlText.trim()}
+                        className="flex items-center gap-1.5 bg-violet-500 hover:bg-violet-600 text-white font-semibold px-4 py-2 rounded-xl disabled:opacity-50 shadow-[0_0_30px_-10px_rgba(167,139,250,0.6)]"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        {nlBusy ? 'Lendo…' : 'Preencher'}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* OCR / photo mode */}
+                  {ocrOpen && (
+                    <motion.div
+                      key="ocr"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="grid grid-cols-2 gap-2"
+                    >
+                      <label className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors ${ocrBusy ? 'border-emerald-500/50 bg-emerald-500/10 pointer-events-none' : 'border-emerald-500/30 bg-bg-soft hover:border-emerald-400/60 hover:bg-emerald-500/5'}`}>
+                        {ocrBusy ? (
+                          <div className="w-4 h-4 rounded-full border-2 border-emerald-400/30 border-t-emerald-400 animate-spin" />
+                        ) : (
+                          <Camera className="w-4 h-4 text-emerald-300" />
+                        )}
+                        <span className="text-sm text-emerald-300 font-medium">{ocrBusy ? 'Lendo…' : 'Tirar foto'}</span>
+                        <input type="file" accept="image/*" capture="environment" className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) onReceiptFile(f); e.target.value = ''; }} />
+                      </label>
+                      <label className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors ${ocrBusy ? 'border-emerald-500/50 bg-emerald-500/10 pointer-events-none' : 'border-emerald-500/30 bg-bg-soft hover:border-emerald-400/60 hover:bg-emerald-500/5'}`}>
+                        <Paperclip className="w-4 h-4 text-emerald-300" />
+                        <span className="text-sm text-emerald-300 font-medium">Anexar arquivo</span>
+                        <input type="file" accept="image/*" className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) onReceiptFile(f); e.target.value = ''; }} />
+                      </label>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
@@ -343,6 +368,23 @@ export function NewTransactionPage() {
           </div>
         )}
 
+        {/* Recorrente */}
+        <div className="rounded-xl border border-border bg-bg-soft p-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+              className="w-4 h-4 accent-accent"
+            />
+            <RefreshCw className="w-4 h-4 text-accent" />
+            <div className="flex flex-col">
+              <span className="text-sm text-slate-200 font-medium">Transação recorrente</span>
+              {isRecurring && <span className="text-[11px] text-muted">Lançada automaticamente todo mês</span>}
+            </div>
+          </label>
+        </div>
+
         {/* Conta */}
         {accounts.length > 0 && (
           <div className="flex flex-col gap-1.5">
@@ -408,6 +450,12 @@ export function NewTransactionPage() {
             className="bg-bg-soft border border-border rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
         </label>
+
+        {accountInfo && (
+          <div className="flex items-start gap-2 text-xs text-emerald-300 bg-emerald-900/20 border border-emerald-700/50 rounded-lg p-3">
+            <span>✓ {accountInfo}</span>
+          </div>
+        )}
 
         {error && (
           <div className="flex items-start gap-2 text-xs text-rose-300 bg-rose-900/20 border border-rose-700/50 rounded-lg p-3">

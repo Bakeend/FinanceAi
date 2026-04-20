@@ -5,6 +5,9 @@ import { Repository } from 'typeorm';
 import { TxRule } from './rule.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
 import { CATEGORIAS } from '../transactions/categoria.enum';
+import { CurrentUser } from '../auth/auth.module';
+
+type U = { id: string; username: string };
 
 class CreateRuleDto {
   @IsString() @MinLength(2) @MaxLength(100) pattern: string;
@@ -26,28 +29,29 @@ export class RulesService {
     @InjectRepository(Transaction) private readonly txRepo: Repository<Transaction>,
   ) {}
 
-  list() { return this.repo.find({ order: { priority: 'DESC', createdAt: 'ASC' } }); }
+  list(userId: string) { return this.repo.find({ where: { userId }, order: { priority: 'DESC', createdAt: 'ASC' } }); }
 
-  create(dto: CreateRuleDto) {
-    return this.repo.save(this.repo.create({ ...dto, priority: dto.priority ?? 0, active: dto.active ?? true } as any));
+  create(dto: CreateRuleDto, userId: string) {
+    return this.repo.save(this.repo.create({ ...dto, priority: dto.priority ?? 0, active: dto.active ?? true, userId } as any));
   }
 
-  async update(id: string, dto: UpdateRuleDto) {
+  async update(id: string, dto: UpdateRuleDto, userId: string) {
+    const existing = await this.repo.findOne({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Regra não encontrada');
     await this.repo.update(id, dto as any);
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id, userId } });
   }
 
-  async remove(id: string) {
-    const r = await this.repo.findOne({ where: { id } });
+  async remove(id: string, userId: string) {
+    const r = await this.repo.findOne({ where: { id, userId } });
     if (!r) throw new NotFoundException('Regra não encontrada');
     await this.repo.delete(id);
   }
 
-  /** Aplica regras ativas a todas transações que ainda estão como "Outros". */
-  async applyAll(): Promise<{ updated: number }> {
-    const rules = await this.repo.find({ where: { active: true }, order: { priority: 'DESC' } });
+  async applyAll(userId: string): Promise<{ updated: number }> {
+    const rules = await this.repo.find({ where: { active: true, userId }, order: { priority: 'DESC' } });
     if (!rules.length) return { updated: 0 };
-    const txs = await this.txRepo.find({ where: { categoria: 'Outros' } });
+    const txs = await this.txRepo.find({ where: { categoria: 'Outros', userId } });
     let updated = 0;
     for (const tx of txs) {
       const match = rules.find((r) => this.matches(tx.descricao, r.pattern));
@@ -59,22 +63,14 @@ export class RulesService {
     return { updated };
   }
 
-  /** Retorna categoria sugerida por regra para uma descrição, ou null. */
-  async findCategoria(descricao: string, rulesCache?: TxRule[]): Promise<string | null> {
-    const rules = rulesCache ?? await this.repo.find({ where: { active: true }, order: { priority: 'DESC' } });
-    const m = rules.find((r) => this.matches(descricao, r.pattern));
-    return m ? m.categoria : null;
-  }
-
-  async loadActive(): Promise<TxRule[]> {
-    return this.repo.find({ where: { active: true }, order: { priority: 'DESC' } });
+  async loadActive(userId: string): Promise<TxRule[]> {
+    return this.repo.find({ where: { active: true, userId }, order: { priority: 'DESC' } });
   }
 
   matches(descricao: string, pattern: string): boolean {
     const d = descricao.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const p = pattern.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (!p) return false;
-    // padrão com * no início/fim = contains; regex se começa com /
     if (p.startsWith('/') && p.endsWith('/') && p.length > 2) {
       try { return new RegExp(p.slice(1, -1), 'i').test(descricao); } catch { return false; }
     }
@@ -85,11 +81,11 @@ export class RulesService {
 @Controller('rules')
 export class RulesController {
   constructor(private readonly svc: RulesService) {}
-  @Get() list() { return this.svc.list(); }
-  @Post() create(@Body() dto: CreateRuleDto) { return this.svc.create(dto); }
-  @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateRuleDto) { return this.svc.update(id, dto); }
-  @Delete(':id') async remove(@Param('id') id: string) { await this.svc.remove(id); return { ok: true }; }
-  @Post('apply') apply() { return this.svc.applyAll(); }
+  @Get() list(@CurrentUser() u: U) { return this.svc.list(u.id); }
+  @Post() create(@CurrentUser() u: U, @Body() dto: CreateRuleDto) { return this.svc.create(dto, u.id); }
+  @Patch(':id') update(@CurrentUser() u: U, @Param('id') id: string, @Body() dto: UpdateRuleDto) { return this.svc.update(id, dto, u.id); }
+  @Delete(':id') async remove(@CurrentUser() u: U, @Param('id') id: string) { await this.svc.remove(id, u.id); return { ok: true }; }
+  @Post('apply') apply(@CurrentUser() u: U) { return this.svc.applyAll(u.id); }
 }
 
 @Module({

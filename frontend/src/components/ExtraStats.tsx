@@ -8,7 +8,10 @@ const fmtDate = (s: string) => s.split('-').reverse().join('/');
 export function ExtraStats({ summary, items, mes, ano }: { summary: Summary; items: Transaction[]; mes: number; ano: number }) {
   const expenses = items.filter((t) => t.valor < 0);
   const daysInMonth = new Date(ano, mes, 0).getDate();
-  const dailyAvg = summary.totalGasto / daysInMonth;
+  const today = new Date();
+  const isCurrentMonth = mes === today.getMonth() + 1 && ano === today.getFullYear();
+  const elapsedDays = isCurrentMonth ? today.getDate() : daysInMonth;
+  const dailyAvg = Math.abs(summary.totalGasto) / elapsedDays;
   const biggest = expenses.reduce<Transaction | null>((acc, t) => (!acc || t.valor < acc.valor ? t : acc), null);
   const savingsRate = summary.totalEntrada > 0
     ? Math.max(0, summary.saldo) / summary.totalEntrada * 100
@@ -18,7 +21,7 @@ export function ExtraStats({ summary, items, mes, ano }: { summary: Summary; ite
     {
       label: 'Média diária',
       value: fmt(dailyAvg),
-      subtitle: `sobre ${daysInMonth} dias`,
+      subtitle: isCurrentMonth ? `nos últimos ${elapsedDays} dias` : `sobre ${daysInMonth} dias`,
       Icon: CalendarDays,
       color: 'text-sky-400',
       bg: 'bg-sky-500/10',

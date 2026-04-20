@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Backend data (SQLite, uploads)
+backend/data/
+backend/uploads/
+backend/dist/
+frontend/dist/
+.claude/

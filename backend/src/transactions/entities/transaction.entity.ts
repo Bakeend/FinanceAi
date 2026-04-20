@@ -41,6 +41,9 @@ export class Transaction {
   @Index() @Column({ type: 'text', nullable: true, name: 'transfer_pair_id' })
   transferPairId: string | null;
 
+  @Column({ type: 'integer', name: 'is_recurring', default: 0, transformer: { to: (v: boolean) => (v ? 1 : 0), from: (v: number) => v === 1 } })
+  isRecurring: boolean;
+
   @Index() @Column({ type: 'text', name: 'user_id', default: '' }) userId: string;
   @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
 }

@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Transaction } from './entities/transaction.entity';
+import { TransactionEdit } from './entities/transaction-edit.entity';
 import { Month } from './entities/month.entity';
 import { TransactionsService } from './transactions.service';
 import { TransactionsController } from './transactions.controller';
@@ -13,7 +14,7 @@ import { RulesModule } from '../rules/rules.module';
 import { TripsModule } from '../trips/trips.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction, Month]), forwardRef(() => AiModule), RulesModule, TripsModule],
+  imports: [TypeOrmModule.forFeature([Transaction, TransactionEdit, Month]), forwardRef(() => AiModule), RulesModule, TripsModule],
   controllers: [TransactionsController],
   providers: [
     TransactionsService,

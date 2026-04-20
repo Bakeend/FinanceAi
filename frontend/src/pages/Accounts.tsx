@@ -13,12 +13,12 @@ const TIPO_OPTIONS: { value: AccountTipo; label: string; Icon: typeof Wallet }[]
 ];
 
 const COLOR_SWATCHES = [
-  '#22d3ee', // cyan
+  '#8B5CF6', // cyan
   '#a78bfa', // violet
-  '#34d399', // emerald
+  '#9DE131', // emerald
   '#f472b6', // pink
   '#fbbf24', // amber
-  '#f87171', // rose
+  '#EC4899', // rose
 ];
 
 const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

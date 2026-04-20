@@ -31,11 +31,11 @@ describe('TransactionsService', () => {
       getRawOne: jest.fn().mockResolvedValue({ gasto: '-300.50', entrada: '1000.00' }),
     } as any);
 
-    await service.recomputeMonth(4, 2026);
+    await service.recomputeMonth(4, 2026, 'user-1');
 
     expect(monthRepo.upsert).toHaveBeenCalledWith(
-      { mes: 4, ano: 2026, totalGasto: -300.5, totalEntrada: 1000 },
-      ['mes', 'ano'],
+      { mes: 4, ano: 2026, userId: 'user-1', totalGasto: -300.5, totalEntrada: 1000 },
+      ['mes', 'ano', 'userId'],
     );
   });
 });

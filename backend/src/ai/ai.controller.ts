@@ -6,6 +6,9 @@ import { ChatMessageEntity } from './chat-message.entity';
 import { TransactionsService } from '../transactions/transactions.service';
 import { AnalyzeDto } from './dto/analyze.dto';
 import { ChatDto } from './dto/chat.dto';
+import { CurrentUser } from '../auth/auth.module';
+
+type U = { id: string; username: string };
 
 @Controller('ai')
 export class AiController {
@@ -16,14 +19,14 @@ export class AiController {
   ) {}
 
   @Get('memory')
-  async getMemory() {
-    const content = await this.ai.getMemory();
+  async getMemory(@CurrentUser() u: U) {
+    const content = await this.ai.getMemory(u.id);
     return { content };
   }
 
   @Post('memory')
-  async setMemory(@Body() body: { content: string }) {
-    const content = await this.ai.setMemory(body?.content ?? '');
+  async setMemory(@CurrentUser() u: U, @Body() body: { content: string }) {
+    const content = await this.ai.setMemory(body?.content ?? '', u.id);
     return { content };
   }
 
@@ -38,20 +41,19 @@ export class AiController {
   }
 
   @Post('search')
-  async search(@Body() body: { text: string }) {
+  async search(@CurrentUser() u: U, @Body() body: { text: string }) {
     if (!body?.text || typeof body.text !== 'string') {
       return { error: 'Campo text obrigatório' };
     }
     const today = new Date().toISOString().slice(0, 10);
     const filters = await this.ai.translateSearchQuery(body.text, today);
-    const items = await this.txs.findFiltered({
+    const items = await this.txs.findFiltered(u.id, {
       mes: filters.mes,
       ano: filters.ano,
       categoria: filters.categoria,
       q: filters.q,
       tipo: filters.tipo,
     });
-    // apply from/to if provided
     let final = items;
     if (filters.from) final = final.filter((t) => t.data >= filters.from!);
     if (filters.to) final = final.filter((t) => t.data <= filters.to!);
@@ -61,11 +63,11 @@ export class AiController {
   }
 
   @Post('analyze')
-  async analyze(@Body() dto: AnalyzeDto) {
-    const rows = await this.txs.findByMonth(dto.mes, dto.ano);
+  async analyze(@CurrentUser() u: U, @Body() dto: AnalyzeDto) {
+    const rows = await this.txs.findByMonth(dto.mes, dto.ano, u.id);
     const priorMes = dto.mes === 1 ? 12 : dto.mes - 1;
     const priorAno = dto.mes === 1 ? dto.ano - 1 : dto.ano;
-    const priorRows = await this.txs.findByMonth(priorMes, priorAno);
+    const priorRows = await this.txs.findByMonth(priorMes, priorAno, u.id);
     const priorMonth = priorRows.length
       ? {
           mes: priorMes,
@@ -79,12 +81,12 @@ export class AiController {
   }
 
   @Post('forecast')
-  async forecast(@Body() dto: AnalyzeDto) {
+  async forecast(@CurrentUser() u: U, @Body() dto: AnalyzeDto) {
     const series: Record<string, number> = {};
     for (let i = 5; i >= 0; i--) {
       const m = dto.mes - i <= 0 ? dto.mes - i + 12 : dto.mes - i;
       const y = dto.mes - i <= 0 ? dto.ano - 1 : dto.ano;
-      const rows = await this.txs.findByMonth(m, y);
+      const rows = await this.txs.findByMonth(m, y, u.id);
       const total = rows.filter((r) => r.valor < 0).reduce((s, r) => s + r.valor, 0);
       series[`${y}-${String(m).padStart(2, '0')}`] = total;
     }
@@ -92,11 +94,11 @@ export class AiController {
   }
 
   @Post('chat')
-  async chat(@Body() dto: ChatDto) {
+  async chat(@CurrentUser() u: U, @Body() dto: ChatDto) {
     const now = new Date();
     const mes = dto.mes ?? now.getMonth() + 1;
     const ano = dto.ano ?? now.getFullYear();
-    const rows = await this.txs.findByMonth(mes, ano);
+    const rows = await this.txs.findByMonth(mes, ano, u.id);
     const expenses = rows.filter((r) => r.valor < 0);
     const income = rows.filter((r) => r.valor > 0);
     const totalGasto = expenses.reduce((s, r) => s + r.valor, 0);
@@ -118,21 +120,21 @@ export class AiController {
     ].join('\n');
     const resposta = await this.ai.chat(dto.mensagem, dto.historico, contexto);
     await this.msgRepo.save([
-      this.msgRepo.create({ role: 'user', content: dto.mensagem }),
-      this.msgRepo.create({ role: 'assistant', content: resposta }),
+      this.msgRepo.create({ role: 'user', content: dto.mensagem, userId: u.id }),
+      this.msgRepo.create({ role: 'assistant', content: resposta, userId: u.id }),
     ]);
     return { resposta };
   }
 
   @Get('chat/history')
-  async history() {
-    const msgs = await this.msgRepo.find({ order: { createdAt: 'ASC' }, take: 200 });
+  async history(@CurrentUser() u: U) {
+    const msgs = await this.msgRepo.find({ where: { userId: u.id }, order: { createdAt: 'ASC' }, take: 200 });
     return msgs.map((m) => ({ role: m.role, content: m.content }));
   }
 
   @Delete('chat/history')
-  async clearHistory() {
-    await this.msgRepo.clear();
+  async clearHistory(@CurrentUser() u: U) {
+    await this.msgRepo.delete({ userId: u.id });
     return { ok: true };
   }
 }

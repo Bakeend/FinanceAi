@@ -77,12 +77,12 @@ export function TrendChart({ mes, ano }: { mes: number; ano: number }) {
             <YAxis stroke="#64748b" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`} width={40} />
             <Tooltip content={<Tip />} />
             <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} iconType="circle" />
-            <Line type="monotone" dataKey="totalGasto" name="Gastos" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} animationDuration={600} connectNulls={false} />
-            <Line type="monotone" dataKey="totalEntrada" name="Entradas" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} animationDuration={600} connectNulls={false} />
+            <Line type="monotone" dataKey="totalGasto" name="Gastos" stroke="#EC4899" strokeWidth={2} dot={{ r: 3 }} animationDuration={600} connectNulls={false} />
+            <Line type="monotone" dataKey="totalEntrada" name="Entradas" stroke="#84CC16" strokeWidth={2} dot={{ r: 3 }} animationDuration={600} connectNulls={false} />
             {forecast && (
               <>
-                <Line type="monotone" dataKey="gastoForecast" name="Previsão gasto" stroke="#f43f5e" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: '#0f172a' }} animationDuration={600} connectNulls={false} />
-                <Line type="monotone" dataKey="entradaForecast" name="Previsão entrada" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: '#0f172a' }} animationDuration={600} connectNulls={false} />
+                <Line type="monotone" dataKey="gastoForecast" name="Previsão gasto" stroke="#EC4899" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: '#0B0B0F' }} animationDuration={600} connectNulls={false} />
+                <Line type="monotone" dataKey="entradaForecast" name="Previsão entrada" stroke="#84CC16" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: '#0B0B0F' }} animationDuration={600} connectNulls={false} />
               </>
             )}
           </LineChart>

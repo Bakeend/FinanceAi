@@ -28,7 +28,7 @@ describe('DashboardService.summary', () => {
       ],
     }).compile();
     const svc = mod.get(DashboardService);
-    const res = await svc.summary(4, 2026);
+    const res = await svc.summary(4, 2026, 'user-1');
     expect(res).toEqual({
       totalGasto: -300, totalEntrada: 1000, saldo: 700,
       porCategoria: [{ categoria: 'Alimentação', total: -200 }, { categoria: 'Transporte', total: -100 }],

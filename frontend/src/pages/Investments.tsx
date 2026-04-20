@@ -92,8 +92,8 @@ export function InvestmentsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                     <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
                     <YAxis stroke="#64748b" fontSize={11} />
-                    <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12 }} formatter={(v) => fmt(Number(v))} />
-                    <Bar dataKey="valor" fill="#34d399" radius={[6, 6, 0, 0]} />
+                    <Tooltip contentStyle={{ background: '#0B0B0F', border: '1px solid #1e293b', borderRadius: 12 }} formatter={(v) => fmt(Number(v))} />
+                    <Bar dataKey="valor" fill="#9DE131" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

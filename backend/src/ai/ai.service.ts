@@ -16,19 +16,20 @@ export class AiService {
     @InjectRepository(AiMemoryEntity) private readonly memoryRepo: Repository<AiMemoryEntity>,
   ) {}
 
-  async getMemory(): Promise<string> {
-    const row = await this.memoryRepo.findOne({ where: { id: 1 } });
+  async getMemory(userId?: string): Promise<string> {
+    if (!userId) return '';
+    const row = await this.memoryRepo.findOne({ where: { userId } });
     return row?.content ?? '';
   }
 
-  async setMemory(content: string): Promise<string> {
+  async setMemory(content: string, userId: string): Promise<string> {
     const clean = (content ?? '').trim().slice(0, 4000);
-    await this.memoryRepo.upsert({ id: 1, content: clean }, ['id']);
+    await this.memoryRepo.upsert({ userId, content: clean }, ['userId']);
     return clean;
   }
 
-  private async buildSys(taskRules: string, extraContext?: string): Promise<string> {
-    const userMemory = await this.getMemory();
+  private async buildSys(taskRules: string, extraContext?: string, userId?: string): Promise<string> {
+    const userMemory = await this.getMemory(userId);
     return buildSystemPrompt({ userMemory, taskRules, extraContext });
   }
 
@@ -104,13 +105,14 @@ export class AiService {
     }
   }
 
-  async parseNaturalTransaction(text: string, today: string): Promise<RawTransaction & { categoria: string }> {
+  async parseNaturalTransaction(text: string, today: string): Promise<RawTransaction & { categoria: string; conta?: string }> {
     const taskRules = [
       '## TAREFA: converter frase em transação estruturada',
       '',
       `Data de referência (hoje): ${today}. Converta referências relativas ("hoje", "ontem", "dia 5") em datas ISO YYYY-MM-DD.`,
       `Categorias permitidas: ${CATEGORIAS.join(', ')}.`,
-      'Responda APENAS JSON {"data":"YYYY-MM-DD","descricao":"...","valor":N,"categoria":"X"}. Valor negativo = gasto, positivo = entrada. Sem markdown.',
+      'Se o texto mencionar um banco/conta/cartão (ex: "no Nubank", "no Itaú", "no cartão Inter"), inclua o campo "conta" com o nome exato. Caso contrário, omita "conta".',
+      'Responda APENAS JSON {"data":"YYYY-MM-DD","descricao":"...","valor":N,"categoria":"X","conta":"NomeDaConta"}. Valor negativo = gasto, positivo = entrada. Sem markdown.',
     ].join('\n');
     const sys = await this.buildSys(taskRules);
     const messages: ChatMessage[] = [
@@ -125,7 +127,8 @@ export class AiService {
       if (typeof parsed.valor !== 'number' || !Number.isFinite(parsed.valor)) throw new Error('valor invalido');
       if (!parsed.descricao) parsed.descricao = text.slice(0, 80);
       if (!allowed.has(parsed.categoria)) parsed.categoria = 'Outros';
-      return { data: parsed.data, descricao: String(parsed.descricao).slice(0, 200), valor: Number(parsed.valor), categoria: parsed.categoria };
+      const conta = typeof parsed.conta === 'string' && parsed.conta.trim() ? parsed.conta.trim().slice(0, 50) : undefined;
+      return { data: parsed.data, descricao: String(parsed.descricao).slice(0, 200), valor: Number(parsed.valor), categoria: parsed.categoria, conta };
     } catch {
       throw new Error('Não consegui extrair a transação dessa frase.');
     }

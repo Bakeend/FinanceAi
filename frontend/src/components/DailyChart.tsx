@@ -43,14 +43,14 @@ export function DailyChart({ items, mes, ano }: { items: Transaction[]; mes: num
         <AreaChart data={data} margin={{ left: 0, right: 8, top: 4, bottom: 4 }}>
           <defs>
             <linearGradient id="daily-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+              <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis dataKey="dia" stroke="#64748b" tick={{ fontSize: 11 }} interval={Math.ceil(daysInMonth / 10)} />
           <YAxis stroke="#64748b" tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}`} width={40} />
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#38bdf8', strokeWidth: 1, strokeDasharray: '3 3' }} />
-          <Area type="monotone" dataKey="gasto" stroke="#38bdf8" strokeWidth={2} fill="url(#daily-grad)" animationDuration={600} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#8B5CF6', strokeWidth: 1, strokeDasharray: '3 3' }} />
+          <Area type="monotone" dataKey="gasto" stroke="#8B5CF6" strokeWidth={2} fill="url(#daily-grad)" animationDuration={600} />
         </AreaChart>
       </ResponsiveContainer>
     </motion.div>

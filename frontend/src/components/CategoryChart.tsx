@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { BarChart3 } from 'lucide-react';
 import type { Summary } from '../lib/types';
 
-const COLORS = ['#38bdf8', '#818cf8', '#a78bfa', '#f472b6', '#fb7185', '#fbbf24', '#34d399', '#60a5fa'];
+const COLORS = ['#8B5CF6', '#818cf8', '#a78bfa', '#f472b6', '#F472B6', '#fbbf24', '#9DE131', '#60a5fa'];
 
 const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

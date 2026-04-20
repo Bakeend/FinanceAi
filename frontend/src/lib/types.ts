@@ -13,6 +13,7 @@ export type Transaction = {
   installmentTotal?: number | null;
   splitParentId?: string | null;
   attachment?: string | null;
+  isRecurring?: boolean;
 };
 
 export type AccountTipo = 'conta' | 'cartao' | 'dinheiro' | 'investimento';

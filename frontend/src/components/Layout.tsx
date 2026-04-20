@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
@@ -5,10 +6,44 @@ import { BottomNav } from './BottomNav';
 import { GlobalSearchBar } from './GlobalSearchBar';
 import { useKeyboardShortcuts } from '../lib/shortcuts';
 
+import { LunaTour } from './LunaTour';
+import { InstallPrompt } from './InstallPrompt';
+
+const TOUR_DONE_KEY = 'financeai-luna-tour-done';
+const TOUR_COMPLETED_KEY = 'financeai-luna-tour-completed';
+const TOUR_COMPLETED_AT_KEY = 'financeai-luna-tour-completed-at';
+export const LUNA_TOUR_EVENT = 'financeai:start-luna-tour';
+
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   useKeyboardShortcuts(navigate);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+    const done = localStorage.getItem(TOUR_DONE_KEY) === '1';
+    if (!done) {
+      const t = setTimeout(() => setTourOpen(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onStart = () => setTourOpen(true);
+    window.addEventListener(LUNA_TOUR_EVENT, onStart);
+    return () => window.removeEventListener(LUNA_TOUR_EVENT, onStart);
+  }, []);
+
+  const closeTour = (reason: 'completed' | 'skipped') => {
+    localStorage.setItem(TOUR_DONE_KEY, '1');
+    if (reason === 'completed') {
+      localStorage.setItem(TOUR_COMPLETED_KEY, '1');
+      localStorage.setItem(TOUR_COMPLETED_AT_KEY, new Date().toISOString());
+    }
+    setTourOpen(false);
+    window.dispatchEvent(new Event('financeai:luna-tour-done'));
+  };
+
   return (
     <div className="flex min-h-screen relative">
       {/* Ambient glow orbs */}
@@ -37,6 +72,9 @@ export function Layout() {
 
       <BottomNav />
       <GlobalSearchBar />
+
+      <InstallPrompt />
+      {tourOpen && <LunaTour onClose={closeTour} />}
     </div>
   );
 }

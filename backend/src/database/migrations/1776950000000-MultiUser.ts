@@ -3,7 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class MultiUser1776950000000 implements MigrationInterface {
   public async up(q: QueryRunner): Promise<void> {
     // Add user_id to simple tables
-    const simpleTables = ['transactions', 'accounts', 'budgets', 'rules', 'reminders', 'trips', 'chat_messages'];
+    const simpleTables = ['transactions', 'accounts', 'budgets', 'tx_rules', 'reminders', 'trips', 'chat_messages'];
     for (const t of simpleTables) {
       await q.query(`ALTER TABLE ${t} ADD COLUMN user_id TEXT NOT NULL DEFAULT ''`);
     }

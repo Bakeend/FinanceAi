@@ -5,38 +5,42 @@
 html, body, #root { height: 100%; }
 
 body {
-  background-color: #0a0f1e;
+  background-color: #0B0B0F;
   background-image:
-    radial-gradient(at 20% 10%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-    radial-gradient(at 80% 0%, rgba(129, 140, 248, 0.07) 0%, transparent 45%),
-    radial-gradient(at 0% 80%, rgba(244, 63, 94, 0.05) 0%, transparent 40%);
+    radial-gradient(at 12% 6%, rgba(109, 40, 217, 0.18) 0%, transparent 45%),
+    radial-gradient(at 88% 2%, rgba(236, 72, 153, 0.10) 0%, transparent 45%),
+    radial-gradient(at 0% 95%, rgba(139, 92, 246, 0.08) 0%, transparent 40%);
   background-attachment: fixed;
-  color: #e2e8f0;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #E5E7EB;
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
 }
+
+h1, h2, h3, h4 { letter-spacing: -0.025em; }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1f2a44; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #2d3b5e; }
+::-webkit-scrollbar-thumb { background: #27272A; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
 .glass {
-  background: rgba(20, 28, 47, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(56, 189, 248, 0.08);
+  background: rgba(26, 19, 51, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid #27272A;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #141c2f 0%, #1a2438 50%, #141c2f 100%);
+  background: linear-gradient(90deg, #1A1333 0%, #241844 50%, #1A1333 100%);
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
 }
@@ -46,36 +50,132 @@ body {
   100% { background-position: 200% 0; }
 }
 
-/* Light theme — overrides the CSS variables / color tokens */
+/* ============= LIGHT THEME ============= */
 html.light body {
-  background-color: #f8fafc;
+  background-color: #F5F5F7;
   background-image:
-    radial-gradient(at 20% 10%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
-    radial-gradient(at 80% 0%, rgba(99, 102, 241, 0.06) 0%, transparent 45%),
-    radial-gradient(at 0% 80%, rgba(244, 63, 94, 0.04) 0%, transparent 40%);
-  color: #0f172a;
+    radial-gradient(at 15% 8%, rgba(109, 40, 217, 0.10) 0%, transparent 45%),
+    radial-gradient(at 85% 2%, rgba(236, 72, 153, 0.07) 0%, transparent 45%);
+  color: #18181B;
 }
-
-html.light .bg-bg { background-color: #f8fafc !important; }
-html.light .bg-bg-soft { background-color: #f1f5f9 !important; }
-html.light .bg-card { background-color: #ffffff !important; }
-html.light .bg-card-hover\/30 { background-color: rgba(241, 245, 249, 0.7) !important; }
-html.light .bg-card-hover\/40 { background-color: rgba(241, 245, 249, 0.85) !important; }
-html.light .bg-card-hover\/50 { background-color: rgba(226, 232, 240, 0.9) !important; }
-html.light .bg-card-hover { background-color: #f1f5f9 !important; }
-html.light .border-border { border-color: #e2e8f0 !important; }
-html.light .text-muted { color: #64748b !important; }
+html.light .bg-bg { background-color: #F5F5F7 !important; }
+html.light .bg-bg-soft { background-color: #EDEDF0 !important; }
+html.light .bg-card { background-color: #FFFFFF !important; }
+html.light .bg-card-hover\/30 { background-color: rgba(237, 237, 240, 0.7) !important; }
+html.light .bg-card-hover\/40 { background-color: rgba(237, 237, 240, 0.85) !important; }
+html.light .bg-card-hover\/50 { background-color: rgba(228, 228, 231, 0.9) !important; }
+html.light .bg-card-hover { background-color: #EDEDF0 !important; }
+html.light .border-border { border-color: #D4D4D8 !important; }
+html.light .text-muted { color: #52525B !important; }
 html.light .text-slate-100,
-html.light .text-slate-200 { color: #0f172a !important; }
-html.light .text-slate-300 { color: #334155 !important; }
-html.light .text-slate-400 { color: #475569 !important; }
+html.light .text-slate-200 { color: #18181B !important; }
+html.light .text-slate-300 { color: #3F3F46 !important; }
+html.light .text-slate-400 { color: #52525B !important; }
 html.light .glass {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(14, 165, 233, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #D4D4D8;
 }
-html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
-html.light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+html.light ::-webkit-scrollbar-thumb { background: #D4D4D8; }
+html.light ::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
 html.light .skeleton {
-  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background: linear-gradient(90deg, #E4E4E7 0%, #F4F4F5 50%, #E4E4E7 100%);
   background-size: 200% 100%;
 }
+html.light .logo-img { filter: invert(1) hue-rotate(180deg) brightness(0.85); }
+
+/* ============= RETRO THEME (CRT TERMINAL / 80s FINANCIAL TERMINAL) ============= */
+html.retro body {
+  background-color: #050805;
+  background-image:
+    radial-gradient(at 50% 0%, rgba(0, 255, 65, 0.06) 0%, transparent 60%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 65, 0.025) 0px,
+      rgba(0, 255, 65, 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  color: #00FF41;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  text-shadow: 0 0 2px rgba(0, 255, 65, 0.35);
+  letter-spacing: 0;
+}
+html.retro h1, html.retro h2, html.retro h3, html.retro h4 {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+html.retro .bg-bg { background-color: #050805 !important; }
+html.retro .bg-bg-soft { background-color: #0a0e0a !important; }
+html.retro .bg-card { background-color: #0a120a !important; border-color: #1b3a1b !important; }
+html.retro .bg-card-hover { background-color: #11201a !important; }
+html.retro .bg-card-hover\/30 { background-color: rgba(17, 32, 26, 0.3) !important; }
+html.retro .bg-card-hover\/40 { background-color: rgba(17, 32, 26, 0.5) !important; }
+html.retro .bg-card-hover\/50 { background-color: rgba(17, 32, 26, 0.6) !important; }
+html.retro .border-border { border-color: #1b3a1b !important; }
+html.retro .text-muted { color: #4a8f4a !important; }
+html.retro .text-slate-100,
+html.retro .text-slate-200,
+html.retro .text-slate-300 { color: #00FF41 !important; }
+html.retro .text-slate-400 { color: #4a8f4a !important; }
+html.retro .text-slate-900 { color: #050805 !important; }
+html.retro .text-accent { color: #FFB800 !important; }
+html.retro .bg-accent\/10,
+html.retro .bg-accent\/15,
+html.retro .bg-accent\/20 { background-color: rgba(255, 184, 0, 0.12) !important; }
+html.retro .border-accent\/20,
+html.retro .border-accent\/40,
+html.retro .border-accent\/50 { border-color: rgba(255, 184, 0, 0.5) !important; }
+html.retro .bg-accent-gradient {
+  background: #FFB800 !important;
+  color: #050805 !important;
+}
+html.retro .bg-accent-gradient:hover { background: #FFD447 !important; }
+html.retro .shadow-glow-accent { box-shadow: 0 0 16px -4px rgba(0, 255, 65, 0.4) !important; }
+html.retro .gradient-text {
+  background: none;
+  -webkit-text-fill-color: #00FF41;
+  color: #00FF41;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+}
+html.retro .glass {
+  background: rgba(10, 18, 10, 0.88);
+  border: 1px solid #1b3a1b;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html.retro ::-webkit-scrollbar-thumb { background: #1b3a1b; }
+html.retro ::-webkit-scrollbar-thumb:hover { background: #2a5a2a; }
+html.retro .skeleton {
+  background: linear-gradient(90deg, #0a120a 0%, #11201a 50%, #0a120a 100%);
+  background-size: 200% 100%;
+}
+html.retro .logo-img {
+  filter: drop-shadow(0 0 6px rgba(236, 72, 153, 0.4));
+}
+html.retro .rounded-xl,
+html.retro .rounded-2xl,
+html.retro .rounded-3xl { border-radius: 2px !important; }
+html.retro .rounded-lg { border-radius: 2px !important; }
+html.retro .rounded-full { border-radius: 2px !important; }
+html.retro button { text-transform: uppercase; letter-spacing: 0.08em; }
+/* Acid green (income) → phosphor green */
+html.retro .text-emerald-300,
+html.retro .text-emerald-400,
+html.retro .text-emerald-500 { color: #00FF88 !important; text-shadow: 0 0 4px rgba(0, 255, 136, 0.5); }
+html.retro .bg-emerald-500\/10,
+html.retro .bg-emerald-500\/15,
+html.retro .bg-emerald-500\/20,
+html.retro .bg-emerald-900\/20 { background-color: rgba(0, 255, 136, 0.08) !important; }
+html.retro .border-emerald-600\/40,
+html.retro .border-emerald-600\/50,
+html.retro .border-emerald-700\/40,
+html.retro .border-emerald-700\/50 { border-color: rgba(0, 255, 136, 0.45) !important; }
+/* Rose (expense) → alert red */
+html.retro .text-rose-300,
+html.retro .text-rose-400,
+html.retro .text-rose-500 { color: #FF2D5F !important; text-shadow: 0 0 4px rgba(255, 45, 95, 0.5); }
+html.retro .bg-rose-500\/10,
+html.retro .bg-rose-900\/20 { background-color: rgba(255, 45, 95, 0.1) !important; }
+html.retro .border-rose-700\/40,
+html.retro .border-rose-700\/50 { border-color: rgba(255, 45, 95, 0.45) !important; }

@@ -55,7 +55,7 @@ export function PastePage() {
         <h2 className="text-3xl font-bold tracking-tight">
           Colar <span className="gradient-text">texto</span>
         </h2>
-        <p className="text-muted text-sm mt-1">E-mail de NF-e, confirmação de compra, qualquer texto com valores — IA extrai</p>
+        <p className="text-muted text-sm mt-1">E-mail de NF-e, confirmação de compra, qualquer texto com valores — a Luna extrai</p>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}

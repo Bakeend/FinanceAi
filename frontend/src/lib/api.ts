@@ -48,7 +48,7 @@ export const api = {
     const qstr = qs.toString();
     return http<Transaction[]>(`/transactions${qstr ? `?${qstr}` : ''}`);
   },
-  createManual: (tx: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string }) =>
+  createManual: (tx: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean }) =>
     http<{ saved: Transaction | null; skipped: number }>('/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,6 +75,7 @@ export const api = {
   updateAccount: (id: string, patch: { nome?: string; cor?: string; banco?: string | null; closingDay?: number | null; dueDay?: number | null; limite?: number | null }) =>
     http<Account>(`/accounts/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }),
   deleteAccount: (id: string) => http<{ ok: boolean }>(`/accounts/${id}`, { method: 'DELETE' }),
+  findOrCreateAccount: (nome: string) => http<{ account: Account; created: boolean }>('/accounts/find-or-create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome }) }),
   accountInvoice: (id: string) => http<Invoice>(`/accounts/${id}/invoice`),
   transfer: (payload: { data: string; valor: number; fromAccountId: string; toAccountId: string; descricao?: string }) =>
     http<{ saved: Transaction[] }>('/transactions/transfer', {
@@ -176,6 +177,7 @@ export const api = {
   yearOverYear: (mes: number, ano: number, years = 3) =>
     http<YearOverYear[]>(`/dashboard/year-over-year?mes=${mes}&ano=${ano}&years=${years}`),
   priceIncreases: () => http<PriceIncrease[]>('/dashboard/price-increases'),
+  subscriptions: () => http<{ assinaturas: { descricao: string; categoria: string; mediaMensal: number; totalAnualEstimado: number; mesesDetectados: number }[]; totalMensal: number }>('/dashboard/subscriptions'),
   gamification: () => http<Gamification>('/dashboard/gamification'),
   forecastNext: (mes: number, ano: number) =>
     http<ForecastNext>(`/dashboard/forecast-next?mes=${mes}&ano=${ano}`),
@@ -276,6 +278,14 @@ export const api = {
       body: JSON.stringify({ ids }),
     }),
 
+  processRecurring: () =>
+    http<{ created: number }>('/transactions/process-recurring', { method: 'POST' }),
+
+  transactionHistory: (id: string) =>
+    http<{ edits: { id: string; field: string; beforeValue: string | null; afterValue: string | null; createdAt: string }[] }>(
+      `/transactions/${id}/history`,
+    ),
+
   // AI memory
   getAiMemory: () => http<{ content: string }>('/ai/memory'),
   setAiMemory: (content: string) =>
@@ -287,7 +297,7 @@ export const api = {
 
   // Natural language
   parseTx: (text: string) =>
-    http<{ data: string; descricao: string; valor: number; categoria: string } | { error: string }>('/ai/parse-tx', {
+    http<{ data: string; descricao: string; valor: number; categoria: string; conta?: string } | { error: string }>('/ai/parse-tx', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
@@ -314,7 +324,7 @@ export const api = {
 
 export function friendlyError(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 503) return 'Limite da IA atingido. Tente novamente mais tarde.';
+    if (e.status === 503) return 'A Luna tá ocupada demais no momento. Tenta de novo em alguns minutos.';
     if (e.status === 500 && e.message.includes('API key')) return e.message;
     return e.message;
   }

@@ -132,12 +132,12 @@ export function ReportsPage() {
                       <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
                       <YAxis stroke="#64748b" fontSize={11} tickFormatter={fmtShort} />
                       <Tooltip
-                        contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12 }}
+                        contentStyle={{ background: '#0B0B0F', border: '1px solid #1e293b', borderRadius: 12 }}
                         formatter={(v) => fmt(Number(v))}
                       />
                       <Legend />
-                      <Bar dataKey="totalEntrada" fill="#34d399" name="Entradas" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="totalGasto" fill="#f87171" name="Gastos" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="totalEntrada" fill="#9DE131" name="Entradas" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="totalGasto" fill="#EC4899" name="Gastos" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -190,12 +190,12 @@ export function ReportsPage() {
                   <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
                   <YAxis stroke="#64748b" fontSize={11} tickFormatter={fmtShort} />
                   <Tooltip
-                    contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12 }}
+                    contentStyle={{ background: '#0B0B0F', border: '1px solid #1e293b', borderRadius: 12 }}
                     formatter={(v) => fmt(Number(v))}
                   />
                   <Legend />
                   {topCatsForEvol.map((c, i) => {
-                    const palette = ['#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#34d399', '#f87171'];
+                    const palette = ['#8B5CF6', '#a78bfa', '#f472b6', '#fbbf24', '#9DE131', '#EC4899'];
                     return <Line key={c} type="monotone" dataKey={c} stroke={palette[i % palette.length]} strokeWidth={2} dot={false} />;
                   })}
                 </LineChart>
@@ -230,10 +230,10 @@ export function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                     <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
                     <YAxis stroke="#64748b" fontSize={11} tickFormatter={fmtShort} />
-                    <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12 }} formatter={(v) => fmt(Number(v))} />
+                    <Tooltip contentStyle={{ background: '#0B0B0F', border: '1px solid #1e293b', borderRadius: 12 }} formatter={(v) => fmt(Number(v))} />
                     <Legend />
-                    <Bar dataKey="totalEntrada" fill="#34d399" name="Entradas" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="totalGasto" fill="#f87171" name="Gastos" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="totalEntrada" fill="#9DE131" name="Entradas" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="totalGasto" fill="#EC4899" name="Gastos" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

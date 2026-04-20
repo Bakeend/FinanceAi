@@ -4,6 +4,9 @@ import { IsHexColor, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength
 import { Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
+import { CurrentUser } from '../auth/auth.module';
+
+type U = { id: string; username: string };
 
 class CreateAccountDto {
   @IsString() @MinLength(1) @MaxLength(50) nome: string;
@@ -33,13 +36,10 @@ function lastDayOfMonth(y: number, m: number): number {
   return new Date(y, m, 0).getDate();
 }
 
-/** Calcula intervalo da fatura atual de um cartão baseado em closingDay. */
 function currentInvoicePeriod(closingDay: number, today: Date = new Date()) {
-  // Fatura atual: (ano,mes com closing -1) dia após closing → (ano,mes atual) dia do closing
   const y = today.getUTCFullYear();
-  const m = today.getUTCMonth() + 1; // 1-12
+  const m = today.getUTCMonth() + 1;
   const dCurrent = today.getUTCDate();
-  // Se ainda não passou do closing do mês atual, período = closing mês anterior+1 → closing mês atual
   if (dCurrent <= closingDay) {
     const prevMonth = m === 1 ? 12 : m - 1;
     const prevYear = m === 1 ? y - 1 : y;
@@ -49,7 +49,6 @@ function currentInvoicePeriod(closingDay: number, today: Date = new Date()) {
     const end = `${y}-${String(m).padStart(2, '0')}-${String(thisClosingDay).padStart(2, '0')}`;
     return { from: addDays(start, 1), to: end };
   }
-  // Se passou do closing do mês atual, período = closing atual+1 → closing mês que vem
   const nextMonth = m === 12 ? 1 : m + 1;
   const nextYear = m === 12 ? y + 1 : y;
   const thisClosingDay = Math.min(closingDay, lastDayOfMonth(y, m));
@@ -66,14 +65,14 @@ export class AccountsService {
     @InjectRepository(Transaction) private readonly txRepo: Repository<Transaction>,
   ) {}
 
-  async list() {
-    const all = await this.repo.find({ order: { createdAt: 'ASC' } });
+  async list(userId: string) {
+    const all = await this.repo.find({ where: { userId }, order: { createdAt: 'ASC' } });
     const results = await Promise.all(
       all.map(async (a) => {
         const row = await this.txRepo
           .createQueryBuilder('t')
           .select('COALESCE(SUM(t.valor), 0)', 'saldo')
-          .where('t.account_id = :id AND t.is_transfer = 0', { id: a.id })
+          .where('t.account_id = :id AND t.is_transfer = 0 AND t.user_id = :uid', { id: a.id, uid: userId })
           .getRawOne<{ saldo: string }>();
         return { ...a, saldo: Number(row?.saldo ?? 0) };
       }),
@@ -81,8 +80,8 @@ export class AccountsService {
     return results;
   }
 
-  async invoice(accountId: string) {
-    const acc = await this.repo.findOne({ where: { id: accountId } });
+  async invoice(accountId: string, userId: string) {
+    const acc = await this.repo.findOne({ where: { id: accountId, userId } });
     if (!acc) throw new NotFoundException('Conta não encontrada');
     if (acc.tipo !== 'cartao' || !acc.closingDay) {
       return { conta: acc, faturaAtual: 0, periodo: null, vencimento: null, transacoes: [], limiteDisponivel: null };
@@ -90,13 +89,12 @@ export class AccountsService {
     const periodo = currentInvoicePeriod(acc.closingDay);
     const txs = await this.txRepo
       .createQueryBuilder('t')
-      .where('t.account_id = :id AND t.data >= :from AND t.data <= :to', {
-        id: accountId, from: periodo.from, to: periodo.to,
+      .where('t.account_id = :id AND t.data >= :from AND t.data <= :to AND t.user_id = :uid', {
+        id: accountId, from: periodo.from, to: periodo.to, uid: userId,
       })
       .orderBy('t.data', 'ASC')
       .getMany();
     const faturaAtual = txs.reduce((s, t) => s + (t.valor < 0 ? -t.valor : 0), 0);
-    // Vencimento: dueDay do mês seguinte ao closing "to"
     let vencimento: string | null = null;
     if (acc.dueDay) {
       const [y, m] = periodo.to.split('-').map(Number);
@@ -109,17 +107,28 @@ export class AccountsService {
     return { conta: acc, faturaAtual, periodo, vencimento, transacoes: txs, limiteDisponivel };
   }
 
-  create(dto: CreateAccountDto) {
-    return this.repo.save(this.repo.create({ ...dto, cor: dto.cor ?? '#38bdf8' } as any));
+  async create(dto: CreateAccountDto, userId: string) {
+    return this.repo.save(this.repo.create({ ...dto, cor: dto.cor ?? '#38bdf8', userId } as any));
   }
 
-  async update(id: string, dto: UpdateAccountDto) {
+  async findOrCreate(nome: string, userId: string): Promise<{ account: Account; created: boolean }> {
+    const all = await this.repo.find({ where: { userId } });
+    const existing = all.find((a) => a.nome.toLowerCase() === nome.toLowerCase());
+    if (existing) return { account: existing, created: false };
+    const draft = this.repo.create({ nome, tipo: 'conta' as const, cor: '#38bdf8', userId, banco: null, isDefault: false, closingDay: null, dueDay: null, limite: null });
+    const account = await this.repo.save(draft);
+    return { account, created: true };
+  }
+
+  async update(id: string, dto: UpdateAccountDto, userId: string) {
+    const existing = await this.repo.findOne({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Conta não encontrada');
     await this.repo.update(id, dto as any);
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id, userId } });
   }
 
-  async remove(id: string) {
-    const acc = await this.repo.findOne({ where: { id } });
+  async remove(id: string, userId: string) {
+    const acc = await this.repo.findOne({ where: { id, userId } });
     if (!acc) throw new NotFoundException('Conta não encontrada');
     if (acc.isDefault) throw new NotFoundException('Conta padrão não pode ser excluída');
     await this.repo.delete(id);
@@ -129,17 +138,18 @@ export class AccountsService {
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly svc: AccountsService) {}
-  @Get() list() { return this.svc.list(); }
-  @Post() create(@Body() dto: CreateAccountDto) { return this.svc.create(dto); }
-  @Get(':id/invoice') invoice(@Param('id') id: string) { return this.svc.invoice(id); }
-  @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateAccountDto) { return this.svc.update(id, dto); }
-  @Delete(':id') async remove(@Param('id') id: string) { await this.svc.remove(id); return { ok: true }; }
+  @Get() list(@CurrentUser() u: U) { return this.svc.list(u.id); }
+  @Post() create(@CurrentUser() u: U, @Body() dto: CreateAccountDto) { return this.svc.create(dto, u.id); }
+  @Post('find-or-create') findOrCreate(@CurrentUser() u: U, @Body() body: { nome: string }) { return this.svc.findOrCreate(body.nome, u.id); }
+  @Get(':id/invoice') invoice(@CurrentUser() u: U, @Param('id') id: string) { return this.svc.invoice(id, u.id); }
+  @Patch(':id') update(@CurrentUser() u: U, @Param('id') id: string, @Body() dto: UpdateAccountDto) { return this.svc.update(id, dto, u.id); }
+  @Delete(':id') async remove(@CurrentUser() u: U, @Param('id') id: string) { await this.svc.remove(id, u.id); return { ok: true }; }
 }
 
 @Module({
   imports: [TypeOrmModule.forFeature([Account, Transaction])],
   providers: [AccountsService],
   controllers: [AccountsController],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, AccountsService],
 })
 export class AccountsModule {}

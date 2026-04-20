@@ -1,43 +1,35 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
-import { X, Upload, Target, ArrowLeftRight, Sparkles, Sun, Moon, CreditCard, Bell, Download, PieChart, Zap, BarChart3, Plane, Clipboard, TrendingUp, User as UserIcon } from 'lucide-react';
+import { X, Plus, Target, Sparkles, Sun, Moon, Wallet, BarChart3, Download, User as UserIcon, Activity, ListOrdered, LayoutDashboard } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { onInstallAvailable, promptInstall } from '../lib/pwa';
 
-type Item = { to: string; label: string; icon: typeof Upload };
+type Item = { to: string; label: string; icon: typeof Plus };
+
 const groups: { title: string; items: Item[] }[] = [
   {
-    title: 'Dinheiro',
+    title: 'Principal',
     items: [
-      { to: '/accounts', label: 'Contas & cartões', icon: CreditCard },
-      { to: '/budgets', label: 'Orçamento', icon: PieChart },
-      { to: '/goals', label: 'Metas', icon: Target },
-      { to: '/reminders', label: 'Lembretes', icon: Bell },
-      { to: '/investments', label: 'Investimentos', icon: TrendingUp },
-      { to: '/trips', label: 'Viagens', icon: Plane },
+      { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/transactions', label: 'Transações', icon: ListOrdered },
     ],
   },
   {
-    title: 'Entrada de dados',
+    title: 'Gerenciar',
     items: [
-      { to: '/upload', label: 'Upload', icon: Upload },
-      { to: '/paste', label: 'Colar texto', icon: Clipboard },
-      { to: '/rules', label: 'Regras', icon: Zap },
-    ],
-  },
-  {
-    title: 'Análise',
-    items: [
-      { to: '/reports', label: 'Relatórios', icon: BarChart3 },
-      { to: '/insights', label: 'Insights IA', icon: Sparkles },
-      { to: '/compare', label: 'Comparar', icon: ArrowLeftRight },
+      { to: '/adicionar', label: 'Adicionar', icon: Plus },
+      { to: '/patrimonio', label: 'Patrimônio', icon: Wallet },
+      { to: '/planejamento', label: 'Planejamento', icon: Target },
+      { to: '/analise', label: 'Análise', icon: BarChart3 },
+      { to: '/chat', label: 'Luna & Insights', icon: Sparkles },
     ],
   },
   {
     title: 'Sistema',
     items: [
       { to: '/profile', label: 'Meu perfil', icon: UserIcon },
+      { to: '/status', label: 'Status', icon: Activity },
     ],
   },
 ];
@@ -89,6 +81,7 @@ export function MoreSheet({ open, onClose }: { open: boolean; onClose: () => voi
                       <NavLink
                         key={i.to}
                         to={i.to}
+                        end={i.to === '/'}
                         onClick={onClose}
                         className={({ isActive }) =>
                           `flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-colors ${

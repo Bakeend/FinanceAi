@@ -155,7 +155,7 @@ export function UploadPage() {
             <p className="text-slate-200 text-base font-medium">
               {isDragActive ? 'Pode soltar!' : 'Arraste um arquivo ou clique para selecionar'}
             </p>
-            <p className="text-xs text-muted mt-2">CSV, OFX, PDF ou imagens (comprovantes / screenshots)</p>
+            <p className="text-xs text-muted mt-2">CSV (Nubank, Inter, genérico), OFX, PDF ou imagens</p>
             <p className="text-[10px] text-muted mt-1">Várias imagens podem ser enviadas de uma vez</p>
           </motion.div>
         </div>

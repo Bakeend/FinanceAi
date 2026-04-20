@@ -6,7 +6,7 @@ import { CategoryChip } from '../components/CategoryChip';
 import type { Trip } from '../lib/types';
 
 const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6', '#fbbf24', '#f87171'];
+const COLORS = ['#8B5CF6', '#a78bfa', '#9DE131', '#f472b6', '#fbbf24', '#EC4899'];
 
 export function TripsPage() {
   const [items, setItems] = useState<Trip[]>([]);

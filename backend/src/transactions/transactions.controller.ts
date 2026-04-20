@@ -336,8 +336,20 @@ export class TransactionsController {
     return this.txs.bulkRemove(body?.ids ?? [], u.id);
   }
 
+  @Post('process-recurring')
+  async processRecurring(@CurrentUser() u: U) {
+    const created = await this.txs.processRecurring(u.id);
+    return { created };
+  }
+
   @Get(':id/tag-suggestions')
   suggestTags(@CurrentUser() u: U, @Param('id') id: string) {
     return this.txs.suggestTags(id, u.id).then((tags) => ({ tags }));
+  }
+
+  @Get(':id/history')
+  async history(@CurrentUser() u: U, @Param('id') id: string) {
+    const edits = await this.txs.listEdits(id, u.id);
+    return { edits };
   }
 }

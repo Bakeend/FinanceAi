@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Upload, Sparkles, MessageCircle, Wallet, ListOrdered, PlusCircle, Target, Sun, Moon, ArrowLeftRight, CreditCard, Bell, Search, PieChart, Zap, BarChart3, Plane, Clipboard, TrendingUp, User as UserIcon, Lock } from 'lucide-react';
+import { LayoutDashboard, ListOrdered, Plus, Sun, Moon, BarChart3, Sparkles, Wallet, Target, Search, Activity, User as UserIcon, Lock } from 'lucide-react';
+import { LogoWordmark } from './Logo';
 import { useTheme } from '../lib/theme';
 import { openGlobalSearch } from './GlobalSearchBar';
 import { useAuth } from '../lib/auth';
@@ -8,41 +9,31 @@ import { useAuth } from '../lib/auth';
 const items = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transações', icon: ListOrdered },
-  { to: '/accounts', label: 'Contas', icon: CreditCard },
-  { to: '/budgets', label: 'Orçamento', icon: PieChart },
-  { to: '/investments', label: 'Investimentos', icon: TrendingUp },
-  { to: '/trips', label: 'Viagens', icon: Plane },
-  { to: '/new', label: 'Nova', icon: PlusCircle },
-  { to: '/upload', label: 'Upload', icon: Upload },
-  { to: '/paste', label: 'Colar texto', icon: Clipboard },
-  { to: '/rules', label: 'Regras', icon: Zap },
-  { to: '/reports', label: 'Relatórios', icon: BarChart3 },
-  { to: '/goals', label: 'Metas', icon: Target },
-  { to: '/reminders', label: 'Lembretes', icon: Bell },
-  { to: '/compare', label: 'Comparar', icon: ArrowLeftRight },
-  { to: '/insights', label: 'Insights', icon: Sparkles },
-  { to: '/chat', label: 'Chat', icon: MessageCircle },
+  { to: '/adicionar', label: 'Adicionar', icon: Plus },
+  { to: '/patrimonio', label: 'Patrimônio', icon: Wallet },
+  { to: '/planejamento', label: 'Planejamento', icon: Target },
+  { to: '/analise', label: 'Análise', icon: BarChart3 },
+  { to: '/chat', label: 'Luna & Insights', icon: Sparkles },
   { to: '/profile', label: 'Perfil', icon: UserIcon },
+  { to: '/status', label: 'Status', icon: Activity },
 ];
 
 export function Sidebar() {
-  const { theme, toggle } = useTheme();
+  const { theme, resolved, toggle } = useTheme();
   const { user, logout } = useAuth();
   return (
-    <aside className="hidden md:flex flex-col w-60 glass border-r border-border p-5 gap-1 sticky top-0 h-screen overflow-hidden">
+    <aside data-tour="sidebar" className="hidden md:flex flex-col w-60 glass border-r border-border p-5 gap-1 sticky top-0 h-screen overflow-hidden">
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex items-center gap-2 mb-6 shrink-0"
+        className="flex items-center justify-center mb-5 shrink-0 -mx-2"
       >
-        <div className="w-9 h-9 rounded-xl bg-accent-gradient flex items-center justify-center shadow-glow-accent">
-          <Wallet className="w-5 h-5 text-slate-900" />
-        </div>
-        <h1 className="text-xl font-bold gradient-text">FinanceAi</h1>
+        <LogoWordmark className="w-full" />
       </motion.div>
 
       <button
+        data-tour="search"
         onClick={openGlobalSearch}
         className="shrink-0 flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-card/50 hover:bg-card-hover text-slate-400 hover:text-slate-100 text-sm transition-colors mb-3"
       >
@@ -104,8 +95,8 @@ export function Sidebar() {
           onClick={toggle}
           className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card hover:bg-card-hover text-slate-300 text-sm transition-colors"
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />}
-          <span>{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
+          {resolved === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />}
+          <span>{theme === 'auto' ? 'Auto' : resolved === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
         </button>
       </div>
     </aside>

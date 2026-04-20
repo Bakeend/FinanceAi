@@ -8,20 +8,26 @@ import { LoginPage } from './pages/Login';
 import { ProfilePage } from './pages/Profile';
 import { useEffect } from 'react';
 import { DashboardPage } from './pages/Dashboard';
-import { UploadPage } from './pages/Upload';
 import { TransactionsPage } from './pages/Transactions';
+import { ChatPage } from './pages/Chat';
+import { AdicionarPage } from './pages/Adicionar';
+import { PatrimonioPage } from './pages/Patrimonio';
+import { PlanejamentoPage } from './pages/Planejamento';
+import { AnalisePage } from './pages/Analise';
+import { StatusPage } from './pages/Status';
+// keep old routes alive for direct links / shortcuts
 import { NewTransactionPage } from './pages/NewTransaction';
+import { UploadPage } from './pages/Upload';
+import { PastePage } from './pages/Paste';
 import { GoalsPage } from './pages/Goals';
+import { RemindersPage } from './pages/Reminders';
 import { ComparePage } from './pages/Compare';
 import { InsightsPage } from './pages/Insights';
-import { ChatPage } from './pages/Chat';
 import { AccountsPage } from './pages/Accounts';
-import { RemindersPage } from './pages/Reminders';
 import { BudgetsPage } from './pages/Budgets';
 import { RulesPage } from './pages/Rules';
 import { ReportsPage } from './pages/Reports';
 import { TripsPage } from './pages/Trips';
-import { PastePage } from './pages/Paste';
 import { InvestmentsPage } from './pages/Investments';
 import { bindInstallPrompt } from './lib/pwa';
 import './index.css';
@@ -50,35 +56,55 @@ function AuthGate() {
     <UndoProvider>
       <Routes>
         <Route element={<Layout />}>
+          {/* Main routes */}
           <Route index element={<DashboardPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
+          <Route path="adicionar" element={<AdicionarPage />} />
+          <Route path="patrimonio" element={<PatrimonioPage />} />
+          <Route path="planejamento" element={<PlanejamentoPage />} />
+          <Route path="analise" element={<AnalisePage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          {/* Legacy routes — keep working */}
           <Route path="new" element={<NewTransactionPage />} />
           <Route path="upload" element={<UploadPage />} />
+          <Route path="paste" element={<PastePage />} />
           <Route path="goals" element={<GoalsPage />} />
           <Route path="reminders" element={<RemindersPage />} />
           <Route path="compare" element={<ComparePage />} />
           <Route path="insights" element={<InsightsPage />} />
-          <Route path="chat" element={<ChatPage />} />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="budgets" element={<BudgetsPage />} />
           <Route path="rules" element={<RulesPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="trips" element={<TripsPage />} />
-          <Route path="paste" element={<PastePage />} />
           <Route path="investments" element={<InvestmentsPage />} />
-          <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </UndoProvider>
   );
 }
 
+function Root() {
+  return (
+    <Routes>
+      <Route path="/status" element={<StatusPage />} />
+      <Route
+        path="*"
+        element={
+          <AuthProvider>
+            <AuthGate />
+          </AuthProvider>
+        }
+      />
+    </Routes>
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <AuthGate />
-      </AuthProvider>
+      <Root />
     </BrowserRouter>
   </React.StrictMode>,
 );

@@ -16,6 +16,8 @@ import { dirname, resolve } from 'path';
           database: dbPath,
           autoLoadEntities: true,
           synchronize: false,
+          migrations: [__dirname + '/migrations/*.{ts,js}'],
+          migrationsRun: true,
         };
       },
     }),

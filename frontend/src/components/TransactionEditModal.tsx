@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Trash2, Tag, Plus, Sparkles, Scissors, Layers, ArrowLeft, Paperclip } from 'lucide-react';
+import { X, Save, Trash2, Tag, Plus, Sparkles, Scissors, Layers, ArrowLeft, Paperclip, Copy, Check, RefreshCw, History, ChevronDown } from 'lucide-react';
 import { api, friendlyError } from '../lib/api';
 import type { Account, Transaction } from '../lib/types';
 import { CATEGORIAS } from '../lib/categories';
@@ -33,6 +33,13 @@ export function TransactionEditModal({
   const [mode, setMode] = useState<'edit' | 'split'>('edit');
   const [splitRows, setSplitRows] = useState<{ valor: string; categoria: string; descricao: string }[]>([]);
   const [attachment, setAttachment] = useState<string | null>(null);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [duplicated, setDuplicated] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [tagsSuggested, setTagsSuggested] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<Array<{ id: string; field: string; beforeValue: string | null; afterValue: string | null; createdAt: string }> | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -50,6 +57,7 @@ export function TransactionEditModal({
       setApplyToInstallments(false);
       setMode('edit');
       setAttachment(tx.attachment ?? null);
+      setIsRecurring(tx.isRecurring ?? false);
       const half = Math.abs(tx.valor) / 2;
       setSplitRows([
         { valor: half.toFixed(2), categoria: tx.categoria, descricao: '' },
@@ -62,12 +70,33 @@ export function TransactionEditModal({
     api.listAccounts().then(setAccounts).catch(() => setAccounts([]));
   }, []);
 
+  const loadHistory = async () => {
+    if (!tx) return;
+    setHistoryLoading(true);
+    try {
+      const r = await api.transactionHistory(tx.id);
+      setHistory(r.edits);
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const toggleHistory = () => {
+    const next = !historyOpen;
+    setHistoryOpen(next);
+    if (next && !history) loadHistory();
+  };
+
   const loadSuggestions = async () => {
     if (!tx) return;
     setLoadingSugg(true);
     try {
       const r = await api.suggestTags(tx.id);
       setSuggestions(r.tags.filter((t) => !tags.includes(t)));
+      setTagsSuggested(true);
+      setTimeout(() => setTagsSuggested(false), 2000);
     } catch {
       setSuggestions([]);
     } finally {
@@ -119,14 +148,15 @@ export function TransactionEditModal({
         subcategoria: subcategoria.trim() || null,
         accountId: accountId ?? null,
         attachment: attachment,
+        isRecurring,
         ...(applyToInstallments && tx.installmentGroup ? { applyToInstallments: true } : {}),
       } as any);
       await api.updateTags(tx.id, tags);
+      setSaved(true);
       onSaved();
-      onClose();
+      setTimeout(() => { setSaved(false); onClose(); }, 900);
     } catch (e) {
       setError(friendlyError(e));
-    } finally {
       setBusy(false);
     }
   };
@@ -172,6 +202,21 @@ export function TransactionEditModal({
     } catch (e) {
       setError(friendlyError(e));
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const duplicate = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      await api.createManual({ data: today, descricao: tx.descricao, valor: tx.valor, categoria: tx.categoria, ...(tx.accountId ? { accountId: tx.accountId } : {}) });
+      setDuplicated(true);
+      onSaved();
+      setTimeout(() => { setDuplicated(false); onClose(); }, 1200);
+    } catch (e) {
+      setError(friendlyError(e));
       setBusy(false);
     }
   };
@@ -432,6 +477,17 @@ export function TransactionEditModal({
               </label>
             )}
 
+            <label className="flex items-center gap-2 text-xs text-slate-300 bg-bg-soft border border-border rounded-xl px-3 py-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="w-3.5 h-3.5 accent-accent"
+              />
+              <RefreshCw className="w-3.5 h-3.5 text-accent" />
+              <span>Recorrente — relançar todo mês automaticamente</span>
+            </label>
+
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted uppercase tracking-wider flex items-center gap-1">
@@ -440,10 +496,18 @@ export function TransactionEditModal({
                 <button
                   onClick={loadSuggestions}
                   disabled={loadingSugg}
-                  className="text-[10px] text-accent hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+                  className={`text-[10px] hover:underline inline-flex items-center gap-1 disabled:opacity-50 transition-colors duration-200 ${tagsSuggested ? 'text-emerald-400' : 'text-accent'}`}
                 >
-                  <Sparkles className="w-3 h-3" />
-                  {loadingSugg ? 'Sugerindo…' : 'Sugerir tags'}
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span key={tagsSuggested ? 'check' : 'spark'} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center">
+                      {tagsSuggested ? <Check className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                    </motion.span>
+                  </AnimatePresence>
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span key={tagsSuggested ? 'done' : loadingSugg ? 'loading' : 'idle'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
+                      {tagsSuggested ? 'Sugeridas!' : loadingSugg ? 'Sugerindo…' : 'Sugerir tags'}
+                    </motion.span>
+                  </AnimatePresence>
                 </button>
               </div>
               <div className="bg-card border border-border rounded-xl p-2 flex flex-wrap gap-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
@@ -532,6 +596,57 @@ export function TransactionEditModal({
             </div>
           </div>
 
+          {/* History disclosure */}
+          <div className="mt-3 rounded-xl border border-border bg-bg-soft overflow-hidden">
+            <button
+              type="button"
+              onClick={toggleHistory}
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-card-hover/50"
+              aria-expanded={historyOpen}
+            >
+              <History className="w-3.5 h-3.5 text-accent" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Histórico de edições</span>
+              {history && (
+                <span className="text-[10px] text-muted">· {history.length}</span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 text-muted ml-auto transition-transform ${historyOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {historyOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-2 max-h-48 overflow-y-auto">
+                    {historyLoading ? (
+                      <div className="text-xs text-muted text-center py-3">Carregando…</div>
+                    ) : !history || history.length === 0 ? (
+                      <div className="text-xs text-muted text-center py-3">Sem edições registradas.</div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        {history.map((h) => (
+                          <div key={h.id} className="text-[11px] flex flex-col gap-0.5 px-2 py-1.5 rounded-lg bg-card border border-border/60">
+                            <div className="flex items-center gap-2">
+                              <span className="text-accent font-bold uppercase tracking-wider text-[9px]">{h.field}</span>
+                              <span className="text-muted ml-auto">{new Date(h.createdAt).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div className="flex items-center gap-1 truncate">
+                              <span className="text-rose-300/80 line-through truncate max-w-[40%]" title={h.beforeValue ?? ''}>{h.beforeValue ?? '∅'}</span>
+                              <span className="text-muted">→</span>
+                              <span className="text-emerald-300 truncate max-w-[40%]" title={h.afterValue ?? ''}>{h.afterValue ?? '∅'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {error && <div className="mt-3 text-xs text-rose-300 bg-rose-900/20 border border-rose-700/50 rounded-lg p-2">{error}</div>}
 
           <div className="flex gap-2 mt-5">
@@ -544,6 +659,41 @@ export function TransactionEditModal({
               <span className="text-sm font-medium hidden sm:inline">Excluir</span>
             </button>
             <button
+              onClick={duplicate}
+              disabled={busy}
+              title="Duplicar com data de hoje"
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 disabled:opacity-50 ${
+                duplicated
+                  ? 'border-emerald-600/50 bg-emerald-500/10 text-emerald-300'
+                  : 'border-border bg-card text-slate-200 hover:bg-card-hover'
+              }`}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={duplicated ? 'check' : 'copy'}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center"
+                >
+                  {duplicated ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </motion.span>
+              </AnimatePresence>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={duplicated ? 'done' : 'label'}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-sm font-medium hidden sm:inline"
+                >
+                  {duplicated ? 'Duplicado!' : 'Duplicar'}
+                </motion.span>
+              </AnimatePresence>
+            </button>
+            <button
               onClick={() => setMode('split')}
               disabled={busy}
               className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-border bg-card text-slate-200 hover:bg-card-hover disabled:opacity-50 transition-colors"
@@ -554,10 +704,32 @@ export function TransactionEditModal({
             <button
               onClick={save}
               disabled={busy}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent-gradient text-slate-900 font-semibold disabled:opacity-50 shadow-glow-accent"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent-gradient text-slate-900 font-semibold disabled:opacity-50 shadow-glow-accent overflow-hidden"
             >
-              <Save className="w-4 h-4" />
-              <span className="text-sm">{busy ? 'Salvando…' : 'Salvar'}</span>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={saved ? 'check' : 'save'}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center"
+                >
+                  {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                </motion.span>
+              </AnimatePresence>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={saved ? 'saved' : busy ? 'saving' : 'idle'}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-sm"
+                >
+                  {saved ? 'Salvo!' : busy ? 'Salvando…' : 'Salvar'}
+                </motion.span>
+              </AnimatePresence>
             </button>
           </div>
           </>

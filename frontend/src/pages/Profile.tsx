@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { User as UserIcon, Lock, KeyRound, LogOut, ShieldAlert, CheckCircle2, AlertCircle, Database, Download, Upload as UploadIcon, FileText, Bell, BellOff, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
+import { User as UserIcon, Lock, KeyRound, LogOut, ShieldAlert, CheckCircle2, AlertCircle, Database, Download, Upload as UploadIcon, FileText, Bell, BellOff, Trash2, Sun, Moon, Clock, Check, Terminal, Sparkles, Compass, Keyboard, Film } from 'lucide-react';
+import { LUNA_TOUR_EVENT } from '../components/Layout';
+import { LunaWrapped } from '../components/LunaWrapped';
 import { api, friendlyError } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useTheme } from '../lib/theme';
 import { isNotificationEnabled, requestNotificationPermission, notifyNow } from '../lib/notifications';
 
 export function ProfilePage() {
@@ -68,6 +72,11 @@ export function ProfilePage() {
       <PinSection hasPin={user.hasPin} refresh={refreshMe} flash={flash} />
       <LogoutAllSection flash={flash} logout={logout} />
 
+      <ThemeSection />
+      <WelcomeAnimationSection />
+      <LunaTourSection />
+      <WrappedSection />
+      <ShortcutsSection />
       <NotificationsSection flash={flash} />
       <BackupSection flash={flash} />
       <ExportSection />
@@ -92,6 +101,7 @@ function ChangePasswordSection({ flash }: { flash: (k: 'ok' | 'err', t: string) 
   const [newPassword, setNew] = useState('');
   const [repeat, setRepeat] = useState('');
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
 
   const submit = async () => {
     if (newPassword.length < 8) return flash('err', 'Nova senha precisa ter ao menos 8 caracteres.');
@@ -101,6 +111,8 @@ function ChangePasswordSection({ flash }: { flash: (k: 'ok' | 'err', t: string) 
       await api.authChangePassword({ currentPassword, newPassword });
       setCur(''); setNew(''); setRepeat('');
       flash('ok', 'Senha alterada.');
+      setDone(true);
+      setTimeout(() => setDone(false), 2500);
     } catch (e) {
       flash('err', friendlyError(e));
     } finally { setBusy(false); }
@@ -116,8 +128,19 @@ function ChangePasswordSection({ flash }: { flash: (k: 'ok' | 'err', t: string) 
         <input type="password" placeholder="Repita a nova senha" value={repeat} onChange={(e) => setRepeat(e.target.value)}
           className="bg-bg-soft border border-border rounded-xl px-3 py-2 text-sm text-slate-100 focus:border-accent focus:outline-none" />
         <button onClick={submit} disabled={busy || !currentPassword || !newPassword}
-          className="self-start mt-1 px-3 py-2 rounded-xl bg-accent-gradient text-slate-900 font-semibold text-sm disabled:opacity-50 shadow-glow-accent">
-          {busy ? 'Salvando…' : 'Alterar senha'}
+          className={`self-start mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm disabled:opacity-50 transition-all duration-200 overflow-hidden ${
+            done ? 'bg-emerald-500/20 border border-emerald-600/50 text-emerald-300' : 'bg-accent-gradient text-slate-900 shadow-glow-accent'
+          }`}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span key={done ? 'check' : 'icon'} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center">
+              {done && <Check className="w-4 h-4" />}
+            </motion.span>
+          </AnimatePresence>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span key={done ? 'done' : busy ? 'saving' : 'idle'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
+              {done ? 'Alterada!' : busy ? 'Salvando…' : 'Alterar senha'}
+            </motion.span>
+          </AnimatePresence>
         </button>
       </div>
     </Section>
@@ -129,6 +152,7 @@ function PinSection({ hasPin, refresh, flash }: { hasPin: boolean; refresh: () =
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
 
   const set = async () => {
     if (!/^\d{4,6}$/.test(pin)) return flash('err', 'PIN de 4 a 6 dígitos.');
@@ -139,6 +163,8 @@ function PinSection({ hasPin, refresh, flash }: { hasPin: boolean; refresh: () =
       setPassword(''); setPin(''); setPin2('');
       await refresh();
       flash('ok', hasPin ? 'PIN atualizado.' : 'PIN criado.');
+      setDone(true);
+      setTimeout(() => setDone(false), 2500);
     } catch (e) {
       flash('err', friendlyError(e));
     } finally { setBusy(false); }
@@ -171,8 +197,19 @@ function PinSection({ hasPin, refresh, flash }: { hasPin: boolean; refresh: () =
         </div>
         <div className="flex gap-2 mt-1">
           <button onClick={set} disabled={busy || !password || !pin}
-            className="px-3 py-2 rounded-xl bg-accent-gradient text-slate-900 font-semibold text-sm disabled:opacity-50 shadow-glow-accent">
-            {busy ? 'Salvando…' : hasPin ? 'Atualizar PIN' : 'Criar PIN'}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm disabled:opacity-50 transition-all duration-200 overflow-hidden ${
+              done ? 'bg-emerald-500/20 border border-emerald-600/50 text-emerald-300' : 'bg-accent-gradient text-slate-900 shadow-glow-accent'
+            }`}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span key={done ? 'check' : 'icon'} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center">
+                {done && <Check className="w-4 h-4" />}
+              </motion.span>
+            </AnimatePresence>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span key={done ? 'done' : busy ? 'saving' : 'idle'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
+                {done ? (hasPin ? 'Atualizado!' : 'Criado!') : busy ? 'Salvando…' : hasPin ? 'Atualizar PIN' : 'Criar PIN'}
+              </motion.span>
+            </AnimatePresence>
           </button>
           {hasPin && (
             <button onClick={remove} disabled={busy}
@@ -211,6 +248,211 @@ function LogoutAllSection({ flash, logout }: { flash: (k: 'ok' | 'err', t: strin
   );
 }
 
+function ThemeSection() {
+  const { theme, setTheme } = useTheme();
+  const options = [
+    { value: 'dark', label: 'Escuro', Icon: Moon },
+    { value: 'light', label: 'Claro', Icon: Sun },
+    { value: 'auto', label: 'Auto', Icon: Clock },
+    { value: 'retro', label: 'Retrô', Icon: Terminal },
+  ] as const;
+  return (
+    <Section icon={Sun} title="Aparência">
+      <p className="text-xs text-muted mb-3">Modo automático muda entre escuro (18h–6h) e claro (6h–18h). Retrô: terminal CRT anos 80.</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {options.map(({ value, label, Icon }) => (
+          <button
+            key={value}
+            onClick={() => setTheme(value)}
+            className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-all duration-150 ${theme === value ? 'border-accent bg-accent/15 text-accent' : 'border-border text-muted hover:text-slate-200 hover:border-accent/50'}`}
+          >
+            <Icon className="w-4 h-4" />{label}
+          </button>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function WelcomeAnimationSection() {
+  const [enabled, setEnabled] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('financeai-welcome-enabled') !== 'false';
+  });
+  useEffect(() => {
+    localStorage.setItem('financeai-welcome-enabled', enabled ? 'true' : 'false');
+  }, [enabled]);
+  const replay = () => {
+    sessionStorage.removeItem('financeai-welcome-shown');
+    window.location.href = '/';
+  };
+  return (
+    <Section icon={Sparkles} title="Boas-vindas">
+      <p className="text-xs text-muted mb-3">Tela animada de saudação ao abrir o Dashboard pela primeira vez na sessão.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-xl border border-border bg-bg-soft">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="w-4 h-4 accent-accent"
+          />
+          <span className="text-sm text-slate-200">{enabled ? 'Ativada' : 'Desativada'}</span>
+        </label>
+        {enabled && (
+          <button
+            onClick={replay}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card-hover/30 text-slate-200 text-sm hover:bg-card-hover/50"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-accent" /> Ver de novo
+          </button>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+function LunaTourSection() {
+  const navigate = useNavigate();
+  const [completed, setCompleted] = useState(() => localStorage.getItem('financeai-luna-tour-completed') === '1');
+  const completedAt = localStorage.getItem('financeai-luna-tour-completed-at');
+  useEffect(() => {
+    const onDone = () => setCompleted(localStorage.getItem('financeai-luna-tour-completed') === '1');
+    window.addEventListener('financeai:luna-tour-done', onDone);
+    return () => window.removeEventListener('financeai:luna-tour-done', onDone);
+  }, []);
+  const start = () => {
+    navigate('/');
+    setTimeout(() => window.dispatchEvent(new Event(LUNA_TOUR_EVENT)), 200);
+  };
+  return (
+    <Section icon={Compass} title="Tour da Luna">
+      <p className="text-xs text-muted mb-3">Tutorial guiado das principais funções do app, com a Luna te explicando passo a passo.</p>
+      {completed && (
+        <div className="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-600/40 text-emerald-300 text-xs">
+          <Check className="w-3.5 h-3.5" />
+          <span>
+            Tutorial concluído
+            {completedAt && (
+              <span className="text-emerald-400/70 ml-1">
+                · {new Date(completedAt).toLocaleDateString('pt-BR')}
+              </span>
+            )}
+          </span>
+        </div>
+      )}
+      <div>
+        <button
+          onClick={start}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-gradient text-slate-900 font-semibold text-sm shadow-glow-accent hover:bg-accent-gradient-hover"
+        >
+          <Compass className="w-4 h-4" />
+          {completed ? 'Refazer tour' : 'Começar tour'}
+        </button>
+      </div>
+    </Section>
+  );
+}
+
+function WrappedSection() {
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [open, setOpen] = useState(false);
+  return (
+    <Section icon={Film} title="Retrospectiva da Luna">
+      <p className="text-xs text-muted mb-3">Resumo do seu ano em cards animados, no estilo "wrapped". Compartilhável.</p>
+      <div className="flex items-center gap-2">
+        <select
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className="bg-bg-soft border border-border rounded-xl px-3 py-2 text-sm text-slate-100 cursor-pointer focus:border-accent focus:outline-none"
+        >
+          {Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-gradient text-slate-900 font-semibold text-sm shadow-glow-accent hover:bg-accent-gradient-hover"
+        >
+          <Film className="w-4 h-4" /> Ver retrospectiva
+        </button>
+      </div>
+      {open && <LunaWrapped year={year} onClose={() => setOpen(false)} />}
+    </Section>
+  );
+}
+
+function ShortcutsSection() {
+  const groups: { title: string; items: { keys: string[]; label: string }[] }[] = [
+    {
+      title: 'Navegação',
+      items: [
+        { keys: ['D'], label: 'Dashboard' },
+        { keys: ['T'], label: 'Transações' },
+        { keys: ['N'], label: 'Nova transação' },
+        { keys: ['U'], label: 'Upload de extrato' },
+        { keys: ['A'], label: 'Contas' },
+        { keys: ['B'], label: 'Orçamento' },
+        { keys: ['G'], label: 'Metas' },
+        { keys: ['R'], label: 'Relatórios' },
+        { keys: ['I'], label: 'Insights da Luna' },
+        { keys: ['C'], label: 'Conversar com a Luna' },
+        { keys: ['P'], label: 'Perfil' },
+      ],
+    },
+    {
+      title: 'Geral',
+      items: [
+        { keys: ['Ctrl', 'K'], label: 'Abrir busca global' },
+        { keys: ['S'], label: 'Abrir busca (alternativo)' },
+        { keys: ['/'], label: 'Abrir busca (alternativo)' },
+        { keys: ['?'], label: 'Mostrar atalhos rápidos' },
+        { keys: ['Esc'], label: 'Fechar modal · sair de input' },
+      ],
+    },
+    {
+      title: 'Tour da Luna',
+      items: [
+        { keys: ['→'], label: 'Próximo passo' },
+        { keys: ['←'], label: 'Passo anterior' },
+        { keys: ['Esc'], label: 'Pular tour' },
+      ],
+    },
+  ];
+  return (
+    <Section icon={Keyboard} title="Atalhos do teclado">
+      <p className="text-xs text-muted mb-3">Comandos rápidos pra navegar sem tirar a mão do teclado.</p>
+      <div className="flex flex-col gap-4">
+        {groups.map((g) => (
+          <div key={g.title}>
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted mb-2">{g.title}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {g.items.map((it, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-bg-soft border border-border"
+                >
+                  <span className="text-sm text-slate-200 truncate">{it.label}</span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    {it.keys.map((k, idx) => (
+                      <span key={idx} className="flex items-center gap-1">
+                        {idx > 0 && <span className="text-muted text-[10px]">+</span>}
+                        <kbd className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md border border-border bg-card text-[11px] font-mono font-bold text-accent">
+                          {k}
+                        </kbd>
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 function NotificationsSection({ flash }: { flash: (k: 'ok' | 'err', t: string) => void }) {
   const [notifOn, setNotifOn] = useState(isNotificationEnabled());
   const enable = async () => {
@@ -233,6 +475,7 @@ function NotificationsSection({ flash }: { flash: (k: 'ok' | 'err', t: string) =
 
 function BackupSection({ flash }: { flash: (k: 'ok' | 'err', t: string) => void }) {
   const [busy, setBusy] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const restore = async (file: File) => {
     if (!confirm(`Substituir o banco atual pelo conteúdo de "${file.name}"? Ação irreversível.`)) return;
     setBusy(true);
@@ -244,7 +487,6 @@ function BackupSection({ flash }: { flash: (k: 'ok' | 'err', t: string) => void 
       flash('err', friendlyError(e));
     } finally { setBusy(false); }
   };
-  // Backup precisa baixar COM o token. Geramos o link via fetch+blob.
   const download = async () => {
     setBusy(true);
     try {
@@ -258,6 +500,8 @@ function BackupSection({ flash }: { flash: (k: 'ok' | 'err', t: string) => void 
       a.download = `financeai-backup-${new Date().toISOString().slice(0, 10)}.db`;
       a.click();
       URL.revokeObjectURL(url);
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2500);
     } catch (e) {
       flash('err', friendlyError(e));
     } finally { setBusy(false); }
@@ -267,8 +511,19 @@ function BackupSection({ flash }: { flash: (k: 'ok' | 'err', t: string) => void 
       <p className="text-xs text-muted mb-2">Salve uma cópia ou restaure. Inclui todas as transações, contas, orçamentos etc.</p>
       <div className="flex flex-wrap gap-2">
         <button onClick={download} disabled={busy}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-gradient text-slate-900 font-semibold text-sm shadow-glow-accent disabled:opacity-50">
-          <Download className="w-4 h-4" /> Baixar backup
+          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-sm disabled:opacity-50 transition-all duration-200 overflow-hidden ${
+            downloaded ? 'bg-emerald-500/20 border border-emerald-600/50 text-emerald-300' : 'bg-accent-gradient text-slate-900 shadow-glow-accent'
+          }`}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span key={downloaded ? 'check' : 'dl'} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center">
+              {downloaded ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+            </motion.span>
+          </AnimatePresence>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span key={downloaded ? 'done' : 'idle'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
+              {downloaded ? 'Baixado!' : busy ? 'Baixando…' : 'Baixar backup'}
+            </motion.span>
+          </AnimatePresence>
         </button>
         <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card-hover/30 text-slate-200 text-sm cursor-pointer">
           <UploadIcon className="w-4 h-4" /> {busy ? 'Restaurando…' : 'Restaurar backup'}
@@ -280,8 +535,37 @@ function BackupSection({ flash }: { flash: (k: 'ok' | 'err', t: string) => void 
   );
 }
 
+function ExportButton({ label, onDownload }: { label: string; onDownload: () => Promise<void> }) {
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const handle = async () => {
+    setBusy(true);
+    try {
+      await onDownload();
+      setDone(true);
+      setTimeout(() => setDone(false), 2500);
+    } finally { setBusy(false); }
+  };
+  return (
+    <button onClick={handle} disabled={busy}
+      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm disabled:opacity-50 transition-all duration-200 overflow-hidden ${
+        done ? 'border-emerald-600/50 bg-emerald-500/10 text-emerald-300' : 'border-border bg-card-hover/30 text-slate-200'
+      }`}>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span key={done ? 'check' : 'dl'} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center">
+          {done ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+        </motion.span>
+      </AnimatePresence>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span key={done ? 'done' : 'idle'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
+          {done ? 'Baixado!' : label}
+        </motion.span>
+      </AnimatePresence>
+    </button>
+  );
+}
+
 function ExportSection() {
-  // Os exports CSV/XLS precisam passar token. Faremos download via fetch.
   const token = () => localStorage.getItem('financeai-token');
   const download = async (url: string, filename: string) => {
     const t = token();
@@ -296,14 +580,8 @@ function ExportSection() {
     <Section icon={FileText} title="Exportar dados">
       <p className="text-xs text-muted mb-2">Formatos de texto pra abrir em outras ferramentas.</p>
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => download(api.exportUrl(), 'financeai-export.csv')}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card-hover/30 text-slate-200 text-sm">
-          <Download className="w-4 h-4" /> CSV
-        </button>
-        <button onClick={() => download(api.exportXlsUrl(), 'financeai-export.xls')}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card-hover/30 text-slate-200 text-sm">
-          <Download className="w-4 h-4" /> Excel (.xls)
-        </button>
+        <ExportButton label="CSV" onDownload={() => download(api.exportUrl(), 'financeai-export.csv')} />
+        <ExportButton label="Excel (.xls)" onDownload={() => download(api.exportXlsUrl(), 'financeai-export.xls')} />
       </div>
     </Section>
   );
