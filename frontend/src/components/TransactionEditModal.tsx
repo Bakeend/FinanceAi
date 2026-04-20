@@ -4,6 +4,7 @@ import { X, Save, Trash2, Tag, Plus, Sparkles, Scissors, Layers, ArrowLeft, Pape
 import { api, friendlyError } from '../lib/api';
 import type { Account, Transaction } from '../lib/types';
 import { CATEGORIAS } from '../lib/categories';
+import { AmountInput } from './AmountInput';
 
 export function TransactionEditModal({
   tx,
@@ -18,7 +19,7 @@ export function TransactionEditModal({
 }) {
   const [data, setData] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [valor, setValor] = useState('');
+  const [valorNum, setValorNum] = useState<number>(0);
   const [categoria, setCategoria] = useState('Outros');
   const [subcategoria, setSubcategoria] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -46,7 +47,7 @@ export function TransactionEditModal({
     if (tx) {
       setData(tx.data);
       setDescricao(tx.descricao);
-      setValor(String(tx.valor));
+      setValorNum(tx.valor);
       setCategoria(tx.categoria);
       setSubcategoria(tx.subcategoria ?? '');
       setTags(tx.tags ?? []);
@@ -135,25 +136,14 @@ export function TransactionEditModal({
   if (!tx) return null;
 
   const save = async () => {
+    if (valorNum === 0) { setError('Valor inválido.'); return; }
     setBusy(true);
     setError(null);
     try {
-      let raw = valor.replace(/[^\d,.-]/g, '');
-      if (raw.includes(',') && raw.includes('.')) {
-        if (raw.lastIndexOf(',') > raw.lastIndexOf('.')) {
-          raw = raw.replace(/\./g, '').replace(',', '.');
-        } else {
-          raw = raw.replace(/,/g, '');
-        }
-      } else if (raw.includes(',')) {
-        raw = raw.replace(',', '.');
-      }
-      const v = Number(raw);
-      if (Number.isNaN(v)) throw new Error('Valor inválido');
       await api.updateTransaction(tx.id, {
         data,
         descricao: descricao.trim(),
-        valor: v,
+        valor: valorNum,
         categoria,
         subcategoria: subcategoria.trim() || null,
         accountId: accountId ?? null,
@@ -421,14 +411,14 @@ export function TransactionEditModal({
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-muted uppercase tracking-wider">Valor (negativo = gasto)</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                className="bg-card border border-border rounded-xl px-3 py-2 text-sm text-slate-100 tabular-nums focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
+              <span className="text-xs text-muted uppercase tracking-wider">Valor</span>
+              <div className="bg-card border border-border rounded-xl px-3 py-2 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <AmountInput
+                  value={valorNum}
+                  onChange={setValorNum}
+                  inputClassName="text-sm text-slate-100 tabular-nums"
+                />
+              </div>
             </label>
 
             <div className="grid grid-cols-2 gap-2">
