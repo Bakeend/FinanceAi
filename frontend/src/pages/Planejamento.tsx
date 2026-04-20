@@ -1,13 +1,15 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Target, PieChart, Bell, Zap } from 'lucide-react';
+import { Target, PieChart, Bell, Zap, TrendingUp } from 'lucide-react';
 import { GoalsPage } from './Goals';
 import { BudgetsPage } from './Budgets';
 import { RemindersPage } from './Reminders';
 import { RulesPage } from './Rules';
+import { ForecastPage } from './Forecast';
 
 const TABS = [
   { id: 'goals', label: 'Metas', icon: Target },
+  { id: 'forecast', label: 'Previsão', icon: TrendingUp },
   { id: 'budgets', label: 'Orçamento', icon: PieChart },
   { id: 'reminders', label: 'Lembretes', icon: Bell },
   { id: 'rules', label: 'Regras', icon: Zap },
@@ -17,6 +19,9 @@ export function PlanejamentoPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const active = searchParams.get('tab') ?? 'goals';
   const setTab = (id: string) => setSearchParams({ tab: id }, { replace: true });
+  const now = new Date();
+  const currentMes = now.getMonth() + 1;
+  const currentAno = now.getFullYear();
 
   return (
     <div className="flex flex-col gap-5">
@@ -55,6 +60,7 @@ export function PlanejamentoPage() {
 
       <motion.div key={active} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         {active === 'goals' && <GoalsPage />}
+        {active === 'forecast' && <ForecastPage mes={currentMes} ano={currentAno} />}
         {active === 'budgets' && <BudgetsPage />}
         {active === 'reminders' && <RemindersPage />}
         {active === 'rules' && <RulesPage />}
