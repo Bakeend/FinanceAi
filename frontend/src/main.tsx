@@ -30,9 +30,20 @@ import { ReportsPage } from './pages/Reports';
 import { TripsPage } from './pages/Trips';
 import { InvestmentsPage } from './pages/Investments';
 import { bindInstallPrompt } from './lib/pwa';
+import { api } from './lib/api';
 import './index.css';
 
 bindInstallPrompt();
+
+window.addEventListener('online', () => {
+  api.flushQueue().then(({ synced }) => {
+    if (synced > 0) console.info(`[offline-sync] ${synced} transações sincronizadas`);
+  });
+});
+
+if (navigator.onLine) {
+  api.flushQueue().catch(() => {});
+}
 
 function AuthGate() {
   const { status, user, logout } = useAuth();

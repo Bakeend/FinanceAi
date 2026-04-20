@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, ListOrdered, Plus, Sun, Moon, BarChart3, Sparkles, Wallet, Target, Search, Activity, User as UserIcon, Lock } from 'lucide-react';
@@ -5,6 +6,7 @@ import { LogoWordmark } from './Logo';
 import { useTheme } from '../lib/theme';
 import { openGlobalSearch } from './GlobalSearchBar';
 import { useAuth } from '../lib/auth';
+import { getPendingCount } from '../lib/offlineQueue';
 
 const items = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,6 +23,19 @@ const items = [
 export function Sidebar() {
   const { theme, resolved, toggle } = useTheme();
   const { user, logout } = useAuth();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const update = () => getPendingCount().then(setPendingCount);
+    update();
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
+
   return (
     <aside data-tour="sidebar" className="hidden md:flex flex-col w-60 glass border-r border-border p-5 gap-1 sticky top-0 h-screen overflow-hidden">
       <motion.div
@@ -80,6 +95,11 @@ export function Sidebar() {
       </div>
 
       <div className="shrink-0 mt-4 pt-4 border-t border-border flex flex-col gap-2">
+        {pendingCount > 0 && (
+          <span className="text-xs bg-amber-500/20 border border-amber-500/40 text-amber-300 px-2 py-0.5 rounded-full self-start">
+            {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+          </span>
+        )}
         {user && (
           <div className="flex items-center gap-2 px-2 py-1 text-xs text-muted">
             <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center">

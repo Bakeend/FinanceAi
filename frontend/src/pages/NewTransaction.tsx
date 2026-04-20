@@ -130,6 +130,18 @@ export function NewTransactionPage() {
         ...(isRecurring ? { isRecurring: true } : {}),
         ...(currency !== 'BRL' ? { currency, originalAmount: parsedOriginal } : {}),
       });
+      if ((r as any).queued) {
+        // Transaction was queued offline - treat as success
+        setError(null);
+        const [y, m] = data.split('-').map(Number);
+        setSuccess({ mes: m, ano: y });
+        setDescricao('');
+        setValorSigned(0);
+        setCurrency('BRL');
+        setOriginalAmount('');
+        setTimeout(() => navigate('/', { state: { mes: m, ano: y } }), 1200);
+        return;
+      }
       if (!r.saved && r.skipped > 0) {
         setError('Já existe uma transação idêntica (mesma data + descrição + valor).');
         return;

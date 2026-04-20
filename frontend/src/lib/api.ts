@@ -1,4 +1,5 @@
 import type { Account, AccountTipo, AlertItem, AnomalyItem, BalancePoint, Budget, CashflowData, CategoryEvolution, ChatMessage, ForecastNext, Gamification, Goal, Invoice, MonthRef, PriceIncrease, RecurringItem, RecurringSuggestion, ReceiptExtracted, Reminder, Summary, TodaySummary, Transaction, TrendPoint, Trip, TxRule, UpcomingReminder, YearOverYear, YearlyProjection, YearlyReport } from './types';
+import { enqueue } from './offlineQueue';
 
 // Vazio = mesma origem (Vite faz proxy pros paths da API em dev, prod usa o mesmo host)
 const BASE = import.meta.env.VITE_API_URL ?? '';
@@ -48,12 +49,37 @@ export const api = {
     const qstr = qs.toString();
     return http<Transaction[]>(`/transactions${qstr ? `?${qstr}` : ''}`);
   },
-  createManual: (tx: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean; currency?: string; originalAmount?: number | null }) =>
-    http<{ saved: Transaction | null; skipped: number }>('/transactions', {
+  createManual: async (data: { data: string; descricao: string; valor: number; categoria?: string; installments?: number; accountId?: string; isRecurring?: boolean; currency?: string; originalAmount?: number | null }) => {
+    if (!navigator.onLine) {
+      await enqueue(data as Record<string, unknown>);
+      return { saved: null, skipped: 0, queued: true } as any;
+    }
+    return http<{ saved: Transaction | null; skipped: number }>('/transactions/manual', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(tx),
-    }),
+      body: JSON.stringify(data),
+    });
+  },
+  flushQueue: async (): Promise<{ synced: number; failed: number }> => {
+    const { getAll, remove } = await import('./offlineQueue');
+    const items = await getAll();
+    let synced = 0;
+    let failed = 0;
+    for (const { key, item } of items) {
+      try {
+        await http<unknown>('/transactions/manual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item.payload),
+        });
+        await remove(key);
+        synced++;
+      } catch {
+        failed++;
+      }
+    }
+    return { synced, failed };
+  },
   updateCategoria: (id: string, categoria: string) =>
     http<Transaction>(`/transactions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categoria }) }),
   updateTransaction: (
