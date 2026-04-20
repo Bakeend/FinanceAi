@@ -20,6 +20,7 @@ import { CashflowWaterfall } from '../components/CashflowWaterfall';
 import { BalanceTimelineChart } from '../components/BalanceTimelineChart';
 import { GoalsProgress } from '../components/GoalsProgress';
 import { DailyBudget } from '../components/DailyBudget';
+import { DashboardInsights } from '../components/DashboardInsights';
 import { RecurringList } from '../components/RecurringList';
 import { TodayWidget } from '../components/TodayWidget';
 import { GamificationCard } from '../components/GamificationCard';
@@ -368,6 +369,8 @@ export function DashboardPage() {
       ) : summary ? (
         <SummaryCards data={summary} items={list} mes={ref.mes} ano={ref.ano} />
       ) : null}
+
+      {summary && <DashboardInsights summary={summary} mes={ref.mes} ano={ref.ano} />}
 
       {/* ═══════════════ ALWAYS VISIBLE: Budget + Today ═══════════════ */}
       {summary && <DailyBudget summary={summary} goals={goals} mes={ref.mes} ano={ref.ano} />}
