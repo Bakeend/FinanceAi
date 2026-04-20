@@ -59,19 +59,27 @@ export function DashboardInsights({
   ano: number;
 }) {
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [prevSummary, setPrevSummary] = useState<Summary | null>(null);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
 
+  // Fetch prev month summary + budgets only when month/year changes
   useEffect(() => {
     const prevMes = mes === 1 ? 12 : mes - 1;
     const prevAno = mes === 1 ? ano - 1 : ano;
-    const dayOfMonth = new Date().getDate();
-
     Promise.all([
       api.summary(prevMes, prevAno).catch(() => null),
       api.listBudgets(mes, ano).catch(() => [] as Budget[]),
-    ]).then(([prev, budgets]) => {
-      setInsights(computeInsights(summary, prev, budgets as Budget[], dayOfMonth));
+    ]).then(([prev, buds]) => {
+      setPrevSummary(prev);
+      setBudgets(buds as Budget[]);
     });
-  }, [summary, mes, ano]);
+  }, [mes, ano]);
+
+  // Recompute insights when summary or fetched data changes
+  useEffect(() => {
+    const dayOfMonth = new Date().getDate();
+    setInsights(computeInsights(summary, prevSummary, budgets, dayOfMonth));
+  }, [summary, prevSummary, budgets]);
 
   if (insights.length === 0) return null;
 

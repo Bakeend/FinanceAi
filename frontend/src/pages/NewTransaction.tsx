@@ -287,7 +287,7 @@ export function NewTransactionPage() {
         </div>
 
         {/* Parcelamento */}
-        {tipo === 'gasto' && (
+        {tipo === 'gasto' && valorSigned !== 0 && (
           <div className="rounded-xl border border-border bg-bg-soft p-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input

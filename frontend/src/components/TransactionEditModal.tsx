@@ -180,6 +180,10 @@ export function TransactionEditModal({
       setError('Nenhuma parcela pode ter valor zero.');
       return;
     }
+    if (splitRows.some((r) => r.valor !== 0 && Math.sign(r.valor) !== Math.sign(tx.valor))) {
+      setError('O sinal de cada parcela deve ser igual ao da transação original.');
+      return;
+    }
     const sum = splitRows.reduce((s, r) => s + r.valor, 0);
     if (Math.abs(sum - tx.valor) > 0.01) {
       setError(`A soma (${sum.toFixed(2)}) deve ser igual ao valor original (${tx.valor.toFixed(2)}).`);
