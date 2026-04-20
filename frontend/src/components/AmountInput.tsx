@@ -48,6 +48,7 @@ export function AmountInput({
 
   const emit = (disp: string, s: '+' | '-') => {
     const abs = parseDisplayToAbs(disp);
+    if (abs === 0 && /\d/.test(disp)) return;
     onChange(s === '-' ? -abs : abs);
   };
 
