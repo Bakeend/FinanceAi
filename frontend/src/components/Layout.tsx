@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useOutlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
@@ -18,6 +18,7 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   useKeyboardShortcuts(navigate);
+  const element = useOutlet();
   const [tourOpen, setTourOpen] = useState(false);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export function Layout() {
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className="max-w-6xl mx-auto"
           >
-            <Outlet />
+            {element}
           </motion.div>
         </AnimatePresence>
       </main>
