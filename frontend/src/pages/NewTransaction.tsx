@@ -104,7 +104,7 @@ export function NewTransactionPage() {
     
     if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return setError('Data inválida');
     if (!descricao.trim()) return setError('Descrição obrigatória');
-    if (valorSigned === 0) return setError('Valor inválido.');
+    if (valorSigned === 0) return setError('Informe um valor diferente de zero.');
 
     setBusy(true);
     try {
@@ -281,7 +281,7 @@ export function NewTransactionPage() {
               onChange={setValorSigned}
               defaultSign="-"
               wrapperClassName="flex-1"
-              inputClassName={`text-2xl font-bold tabular-nums ${tipo === 'gasto' ? 'text-rose-300' : 'text-emerald-300'}`}
+              inputClassName="text-2xl font-bold tabular-nums text-slate-100"
             />
           </div>
         </div>
