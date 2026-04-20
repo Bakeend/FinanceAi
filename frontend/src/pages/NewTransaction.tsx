@@ -104,11 +104,22 @@ export function NewTransactionPage() {
   const submit = async () => {
     setError(null);
     setSuccess(null);
-    const raw = valor.replace(/\s/g, '').replace(',', '.');
+    
+    let raw = valor.replace(/[^\d,.-]/g, '');
+    if (raw.includes(',') && raw.includes('.')) {
+      if (raw.lastIndexOf(',') > raw.lastIndexOf('.')) {
+        raw = raw.replace(/\./g, '').replace(',', '.');
+      } else {
+        raw = raw.replace(/,/g, '');
+      }
+    } else if (raw.includes(',')) {
+      raw = raw.replace(',', '.');
+    }
     const v = Number(raw);
+
     if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return setError('Data inválida');
     if (!descricao.trim()) return setError('Descrição obrigatória');
-    if (Number.isNaN(v) || v === 0) return setError('Valor inválido');
+    if (Number.isNaN(v) || v === 0) return setError('Valor inválido. Use vírgula para centavos.');
     const valorFinal = tipo === 'gasto' ? -Math.abs(v) : Math.abs(v);
 
     setBusy(true);

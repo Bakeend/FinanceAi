@@ -1,3 +1,4 @@
+import { parseCurrency } from '../lib/utils';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Wallet, CreditCard, Banknote, TrendingUp, X, Trash2, Save, AlertCircle, Star, ArrowLeftRight, Receipt, CalendarClock } from 'lucide-react';
@@ -219,7 +220,7 @@ function TransferModal({ accounts, onClose, onSaved }: { accounts: Account[]; on
 
   const submit = async () => {
     setError(null);
-    const v = Number(valor.replace(',', '.'));
+    const v = parseCurrency(valor);
     if (Number.isNaN(v) || v <= 0) return setError('Valor inválido');
     if (from === to) return setError('Origem e destino precisam ser diferentes');
     setBusy(true);
@@ -411,7 +412,7 @@ function AccountModal({
       const isCard = tipo === 'cartao';
       const closingNum = isCard && closingDay ? Number(closingDay) : null;
       const dueNum = isCard && dueDay ? Number(dueDay) : null;
-      const limiteNum = isCard && limite ? Number(limite.replace(',', '.')) : null;
+      const limiteNum = isCard && limite ? parseCurrency(limite) : null;
       if (isCard && closingNum && (closingNum < 1 || closingNum > 31)) return setError('Dia de fechamento entre 1 e 31');
       if (isCard && dueNum && (dueNum < 1 || dueNum > 31)) return setError('Dia de vencimento entre 1 e 31');
       if (mode === 'create') {

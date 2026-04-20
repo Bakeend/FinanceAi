@@ -1,3 +1,4 @@
+import { parseCurrency } from '../lib/utils';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, AlertCircle, Copy, AlertTriangle, CheckCircle2, TrendingDown } from 'lucide-react';
@@ -27,7 +28,7 @@ export function BudgetsPage() {
 
   const add = async () => {
     setError(null);
-    const v = Number(newValor.replace(',', '.'));
+    const v = parseCurrency(newValor);
     if (Number.isNaN(v) || v <= 0) return setError('Valor inválido');
     if (items.some((b) => b.categoria === newCat)) return setError('Já existe orçamento para essa categoria neste mês.');
     setBusy(true);

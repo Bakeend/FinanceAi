@@ -1,3 +1,4 @@
+import { parseCurrency } from '../lib/utils';
 import { useState, useEffect, useRef } from 'react';
 import { PiggyBank, Pencil, Check } from 'lucide-react';
 import type { Summary } from '../lib/types';
@@ -31,7 +32,7 @@ export function SavingsGoalWidget({ summary }: { summary: Summary }) {
   }, [reached, goal]);
 
   const confirm = () => {
-    const v = Number(input.replace(',', '.'));
+    const v = parseCurrency(input);
     if (!Number.isNaN(v) && v >= 0) setGoal(v);
     setEditing(false);
   };

@@ -1,3 +1,4 @@
+import { parseCurrency } from '../lib/utils';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, Plus, X, Trash2, Save, AlertCircle } from 'lucide-react';
@@ -146,7 +147,7 @@ function TripModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
     if (fim < inicio) return setError('Fim precisa ser depois do início');
     setBusy(true);
     try {
-      const orc = orcamento.trim() ? Number(orcamento.replace(',', '.')) : undefined;
+      const orc = orcamento.trim() ? parseCurrency(orcamento) : undefined;
       await api.createTrip({ nome: nome.trim(), inicio, fim, orcamento: orc, cor });
       onSaved();
     } catch (e) {

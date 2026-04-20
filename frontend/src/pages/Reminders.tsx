@@ -1,3 +1,4 @@
+import { parseCurrency } from '../lib/utils';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Plus, Trash2, AlertCircle, CheckCircle2, Calendar } from 'lucide-react';
@@ -29,7 +30,7 @@ export function RemindersPage() {
 
   const add = async () => {
     setError(null);
-    const v = Number(valor.replace(',', '.'));
+    const v = parseCurrency(valor);
     const d = Number(dia);
     if (!descricao.trim()) return setError('Descrição obrigatória');
     if (Number.isNaN(v) || v <= 0) return setError('Valor inválido');

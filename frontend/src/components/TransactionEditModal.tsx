@@ -138,7 +138,17 @@ export function TransactionEditModal({
     setBusy(true);
     setError(null);
     try {
-      const v = Number(valor.replace(',', '.'));
+      let raw = valor.replace(/[^\d,.-]/g, '');
+      if (raw.includes(',') && raw.includes('.')) {
+        if (raw.lastIndexOf(',') > raw.lastIndexOf('.')) {
+          raw = raw.replace(/\./g, '').replace(',', '.');
+        } else {
+          raw = raw.replace(/,/g, '');
+        }
+      } else if (raw.includes(',')) {
+        raw = raw.replace(',', '.');
+      }
+      const v = Number(raw);
       if (Number.isNaN(v)) throw new Error('Valor inválido');
       await api.updateTransaction(tx.id, {
         data,
@@ -162,7 +172,15 @@ export function TransactionEditModal({
   };
 
   const splitTotal = splitRows.reduce((s, r) => {
-    const n = Number((r.valor || '0').replace(',', '.'));
+    let raw = (r.valor || '0').replace(/[^\d,.-]/g, '');
+    if (raw.includes(',') && raw.includes('.')) {
+      raw = raw.lastIndexOf(',') > raw.lastIndexOf('.') 
+        ? raw.replace(/\./g, '').replace(',', '.') 
+        : raw.replace(/,/g, '');
+    } else if (raw.includes(',')) {
+      raw = raw.replace(',', '.');
+    }
+    const n = Number(raw);
     return s + (Number.isNaN(n) ? 0 : n);
   }, 0);
   const parentAbs = Math.abs(tx.valor);
@@ -180,11 +198,21 @@ export function TransactionEditModal({
 
   const confirmSplit = async () => {
     setError(null);
-    const items = splitRows.map((r) => ({
-      valor: Number(r.valor.replace(',', '.')),
-      categoria: r.categoria,
-      descricao: r.descricao.trim() || undefined,
-    }));
+    const items = splitRows.map((r) => {
+      let raw = r.valor.replace(/[^\d,.-]/g, '');
+      if (raw.includes(',') && raw.includes('.')) {
+        raw = raw.lastIndexOf(',') > raw.lastIndexOf('.') 
+          ? raw.replace(/\./g, '').replace(',', '.') 
+          : raw.replace(/,/g, '');
+      } else if (raw.includes(',')) {
+        raw = raw.replace(',', '.');
+      }
+      return {
+        valor: Number(raw),
+        categoria: r.categoria,
+        descricao: r.descricao.trim() || undefined,
+      };
+    });
     if (items.some((it) => Number.isNaN(it.valor) || it.valor <= 0)) {
       setError('Todos os valores devem ser maiores que zero.');
       return;

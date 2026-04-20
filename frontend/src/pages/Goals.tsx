@@ -1,3 +1,4 @@
+import { parseCurrency } from '../lib/utils';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Plus, Trash2, AlertCircle, Wallet, PiggyBank } from 'lucide-react';
@@ -25,7 +26,7 @@ export function GoalsPage() {
 
   const add = async () => {
     setError(null);
-    const v = Number(newValor.replace(',', '.'));
+    const v = parseCurrency(newValor);
     if (Number.isNaN(v) || v <= 0) return setError('Valor inválido');
     if (tipo === 'limite' && goals.some((g) => g.tipo === 'limite' && g.categoria === newCat)) {
       return setError('Já existe meta de limite para essa categoria');
