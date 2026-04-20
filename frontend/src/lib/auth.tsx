@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     setStatus('unauth');
+    navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_API_CACHE' });
   };
 
   const refreshMe = async () => {
