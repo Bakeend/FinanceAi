@@ -1,13 +1,15 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Target, PieChart, Bell, Zap } from 'lucide-react';
+import { Target, PieChart, Bell, Zap, TrendingUp } from 'lucide-react';
 import { GoalsPage } from './Goals';
 import { BudgetsPage } from './Budgets';
 import { RemindersPage } from './Reminders';
 import { RulesPage } from './Rules';
+import { ForecastPage } from './Forecast';
 
 const TABS = [
   { id: 'goals', label: 'Metas', icon: Target },
+  { id: 'forecast', label: 'Previsão', icon: TrendingUp },
   { id: 'budgets', label: 'Orçamento', icon: PieChart },
   { id: 'reminders', label: 'Lembretes', icon: Bell },
   { id: 'rules', label: 'Regras', icon: Zap },
@@ -55,6 +57,7 @@ export function PlanejamentoPage() {
 
       <motion.div key={active} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         {active === 'goals' && <GoalsPage />}
+        {active === 'forecast' && <ForecastPage mes={new Date().getMonth() + 1} ano={new Date().getFullYear()} />}
         {active === 'budgets' && <BudgetsPage />}
         {active === 'reminders' && <RemindersPage />}
         {active === 'rules' && <RulesPage />}
